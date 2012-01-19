@@ -67,13 +67,22 @@ namespace MDSIM {
       inline void mapParticlesToCells()
       {
         std::list<Particle<floatType> >* curParticleList;
+        typename std::list<Particle<floatType> >::iterator p;
+        
         for( int x = _x0-1; x < _x0 + _totalSizeX; x++ )
           for( int y = _y0-1; y < _y0 + _totalSizeY; y++ )
           {
             _cellMatrix.at( y*_totalSizeX + x ).getParticleList( curParticleList );
+            
             // check for <0. and >=1. in local pos of particle
-            // add to other cell (left, right, top, bottom)
-            // remove particle from list
+            for( p = *curParticleList.begin(); p!=*curParticleList.end(); p++ )
+            {
+                std::cout << p->getMass() << std::endl;
+                /// \todo check for <0. and >=1. in local pos of particle
+            }
+            
+            /// \todo add to other cell (left, right, top, bottom)
+            /// \todo remove particle from list
           }
       }
       

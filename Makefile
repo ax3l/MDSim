@@ -31,16 +31,18 @@ MDS       = parler.$(SrcSuf)     \
                 pathfinder.$(SrcSuf) \
                 mp_lib_mpi.$(SrcSuf)
 
-OBJS          = $(PARLERO)
+OBJS          = $(MDO)
 
 #------------------------------------------------------------------------------
 
 .SUFFIXES: .$(SrcSuf) .$(ObjSuf)
 
-all:            $(PARLERO)
+#all:            $(MDO)
+all:
+	$(CXX) $(CXXFLAGS) main.cpp 
 
 clean:
-                @rm -f $(OBJS) core
+	@rm -f $(OBJS) core
 
 distclean:      clean
 
@@ -51,4 +53,4 @@ distclean:      clean
 %.$(ObjSuf): %.h %.$(SrcSuf)
 
 .$(SrcSuf).$(ObjSuf):
-        $(CXX) $(CXXFLAGS) -c $<
+	$(CXX) $(CXXFLAGS) -c $<
