@@ -69,6 +69,13 @@ namespace MDSIM
       {
         return _mass;
       }
+      
+      inline void resetForce( )
+      {
+        _force.x = 0.0;
+        _force.y = 0.0;
+        _force.z = 0.0;
+      }
 
       inline void addPosition( const vector3D<floatType>& off )
       {

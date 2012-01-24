@@ -100,6 +100,25 @@ namespace MDSIM
         _cellMatrix.at( 4 ).addParticle( p );
       }
 
+      inline void resetForces( )
+      {
+        std::list<Particle<floatType> >* curParticleList;
+        typename std::list<Particle<floatType> >::iterator p;
+
+        // walk trough all cells in this domain which are not ghosts
+        for( int x = 1; x < _totalSizeX - 1; x++ )
+          for( int y = 1; y < _totalSizeY - 1; y++ )
+          {
+            curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
+
+            // calculcate in-cell-forces - NxN
+            for( p = curParticleList->begin( ); p != curParticleList->end( ); p++ )
+            {
+              p->resetForce();
+            }
+          }
+      }
+      
       inline void calculateForces( )
       {
         std::list<Particle<floatType> >* curParticleList;
@@ -114,13 +133,14 @@ namespace MDSIM
             // calculcate in-cell-forces - NxN
             for( p1 = curParticleList->begin( ); p1 != curParticleList->end( ); p1++ )
             {
+              p1->resetForce();
               // calculcate in-cell-forces - NxN
               for( p2 = p1; p2 != curParticleList->end( ); p2++ )
               {
                 if( p2 == p1 ) continue;
                 
                 // F = G*m1*m2/r^2
-                vector3D<floatType> r( p1->getPosition() - p2->getPosition() );
+                vector3D<floatType> r( p2->getPosition() - p1->getPosition() );
                 vector3D<floatType> er( r / sqrt( r.abs2( ) ) );
                 
                 const floatType fAbsTmp = simParams::G * p1->getMass( ) * p2->getMass( );
@@ -130,8 +150,8 @@ namespace MDSIM
                 //std::cout << "Er: " << force.x << " " << force.y << " " << force.z << std::endl;
                 //std::cout << "G: " << simParams::G << std::endl;
                 
-                p1->addForce( force*(-1.0) );
-                p2->addForce( force );
+                p1->addForce( force );
+                p2->addForce( force*(-1.0) );
               }
               
               /// \todo forces with particles in neighbor cells
@@ -158,7 +178,7 @@ namespace MDSIM
               // dv = F / m * dt
               p->addVelocity( p->getForce() / p->getMass() * simParams::dt );
               
-              // Move Particle: s = v * dt
+              // Move Particle: ds = v * dt
               p->addPosition( p->getVelocity() * simParams::dt );
               //std::cout << "Move: " << p->getVelocity().x << " " << p->getVelocity().y << " " << p->getVelocity().z << std::endl;
               

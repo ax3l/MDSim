@@ -41,6 +41,7 @@ main( int argc, char *argv[] )
 
   for( double t = 0.0; t < simParams::simTime; t += simParams::dt )
   {
+    myDomain.resetForces();
     myDomain.calculateForces();
     myDomain.moveParticles();
     myDomain.coutParticlePos();

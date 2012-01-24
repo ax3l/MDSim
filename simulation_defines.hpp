@@ -14,7 +14,7 @@ namespace MDSIM
     const double dt_SI = 86400.0;               // One Day
     // Simulation Time in Seconds
     //const double simTime_SI = 1000.0 * 12.0 * dt_SI;
-    const double simTime_SI = 365.0 * 86400.0 / 4.0;
+    const double simTime_SI = 365.0 * 86400.0;
 
     // Number of Cells (no unit) - global
     const int cellsX = 1;
