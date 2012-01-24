@@ -1,9 +1,11 @@
 #ifndef INITIAL_PARTICLES_HPP
 #define INITIAL_PARTICLES_HPP
 
-namespace MDSIM {
-  namespace physics {
-  
+namespace MDSIM
+{
+  namespace physics
+  {
+
     ///
     ///
 

@@ -39,7 +39,8 @@ OBJS          = $(MDO)
 
 #all:            $(MDO)
 all:
-	$(CXX) $(CXXFLAGS) main.cpp 
+	$(CXX) $(CXXFLAGS) main.cpp
+	$(CXX) main.o
 
 clean:
 	@rm -f $(OBJS) core
