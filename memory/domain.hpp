@@ -19,7 +19,7 @@ namespace MDSIM
     /// The local 2D grid of cells
     ///
     /// \tparam floatType Double of Float: for Particle Attributes
-
+    ///
     template <typename floatType>
     class Domain
     {
@@ -37,7 +37,7 @@ namespace MDSIM
       /// \param[in] sizeY number of cells in y direction
       /// \param[in] x0    x cell number for first non-ghost cell
       /// \param[in] y0    y cell number for first non-ghost cell
-
+      ///
       Domain( const int sizeX,
               const int sizeY,
               const int x0,
@@ -61,13 +61,72 @@ namespace MDSIM
       {
         _cellMatrix.clear( );
       }
+      
+      enum {
+        NotInDomain = -1
+      };
+      
+      /// Get the Real Position of the Beginning of this Domain
+      ///
+      /// \return vector3D<floatType> with offset for the first Cell in the Domain
+      ///
+      inline vector3D<floatType> getFirstCellPos( const bool includeGhosts = false ) const
+      {
+        int ghosts = 0;
+        if( includeGhosts == true ) ghosts = -1;
+        
+        vector3D<floatType> r( ( _x0 + ghosts ) * simParams::cutoff,
+                               ( _y0 + ghosts ) * simParams::cutoff,
+                               0.0  );
+        return r;
+      }
+      
+      /// Get the Real Position of the End of this Domain
+      ///
+      /// \return vector3D<floatType> with the position of the last cells "right" border
+      ///
+      inline vector3D<floatType> getLastCellPos( const bool includeGhosts = false ) const
+      {
+        int ghosts = 2;
+        if( includeGhosts == true ) ghosts = 1;
+        
+        vector3D<floatType> r( ( _x0 + _totalSizeX - ghosts ) * simParams::cutoff,
+                               ( _y0 + _totalSizeY - ghosts ) * simParams::cutoff,
+                               0.0  );
+        return r;
+      }
+      
+      /// Get the Cell number for a position
+      ///
+      /// \param[in] vector3D<floatType> position
+      /// \param[out] bool isGhost the position is a ghost cell
+      /// \return int between [0; NrOfNonGhostCellsInDomain-1] or NotInDomain
+      inline int getCellNr( const vector3D<floatType>& pos, bool& isGhost ) const
+      {
+        const int xCell = floor( ( pos.x - getFirstCellPos( true ).x )
+                                 / simParams::cutoff );
+        const int yCell = floor( ( pos.y - getFirstCellPos( true ).y )
+                                 / simParams::cutoff );
+        
+        if( xCell < 0 || xCell >= _totalSizeX ||
+            yCell < 0 || yCell >= _totalSizeY    )
+          return NotInDomain;
+        
+        if( xCell == 0 || xCell == _totalSizeX -1 ||
+            yCell == 0 || yCell == _totalSizeY -1   )
+          isGhost = true;
+        
+        return yCell * _totalSizeY + xCell;
+      }
 
+      /// Delete the particles within ghost cells
+      ///
       inline void clearGhostCells( )
       {
-        for( int x = _x0 - 1; x < _x0 + _totalSizeX; x++ )
-          for( int y = _y0 - 1; y < _y0 + _totalSizeY; y++ )
-            if( x == _x0 - 1 || x == _totalSizeX - 1 ||
-                y == _y0 - 1 || y == _totalSizeY - 1 )
+        for( int x = 0; x < _totalSizeX; x++ )
+          for( int y = 0; y < _totalSizeY; y++ )
+            if( x == 0 || x == _totalSizeX - 1 ||
+                y == 0 || y == _totalSizeY - 1 )
               _cellMatrix.at( y * _totalSizeX + x ).clearParticles( );
       }
 
@@ -77,8 +136,8 @@ namespace MDSIM
         typename std::list<Particle<floatType> >::iterator p;
 
         // walk trough all cells in this domain which (with ghosts)
-        for( int x = _x0 - 1; x < _x0 + _totalSizeX; x++ )
-          for( int y = _y0 - 1; y < _y0 + _totalSizeY; y++ )
+        for( int x = 0; x < _totalSizeX; x++ )
+          for( int y = 0; y < _totalSizeY; y++ )
           {
             _cellMatrix.at( y * _totalSizeX + x ).getParticleList( curParticleList );
 
@@ -94,12 +153,38 @@ namespace MDSIM
           }
       }
 
-      inline void addParticle( const Particle<floatType>& p )
+      /// Add a particle to this Domain
+      ///
+      /// Adds the particle to the corresponding cell within this domain.
+      ///
+      /// \param[in] Particle<floatType> particle with attributes
+      /// \param[in] bool allowGhost, allows to add a particle to the ghost
+      ///                             cell regions
+      ///
+      inline void addParticle( const Particle<floatType>& p,
+                               const bool allowGhost = false )
       {
-        /// \todo this!
-        _cellMatrix.at( 4 ).addParticle( p );
+        bool isGhost = false;
+        const int cellNr = getCellNr( p.getPosition(), isGhost );
+        
+        if( cellNr == NotInDomain || 
+            ( isGhost == true && allowGhost == false ) )
+        {
+          std::cout << "ERROR: Position( " << p.getPosition().x << " "
+                    << p.getPosition().y << " " << p.getPosition().z
+                    << " ) not in Domain! (isGhost: " << isGhost << ")"
+                    << std::endl;
+        } else
+        {
+          _cellMatrix.at( cellNr ).addParticle( p );
+          //std::cout << "Added particle to cell nr. " << cellNr << std::endl;
+        }
       }
 
+      /// Resets the Forces for each Particle
+      ///
+      /// (without ghosts)
+      ///
       inline void resetForces( )
       {
         std::list<Particle<floatType> >* curParticleList;
@@ -111,7 +196,7 @@ namespace MDSIM
           {
             curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
 
-            // calculcate in-cell-forces - NxN
+            // walk through all particles within this cell
             for( p = curParticleList->begin( ); p != curParticleList->end( ); p++ )
             {
               p->resetForce();
