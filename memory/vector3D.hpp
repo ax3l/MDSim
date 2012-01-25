@@ -95,6 +95,14 @@ namespace MDSIM
         this->z += rhs.z;
         return *this;
       }
+      
+      vector3D& operator-=(const vector3D& rhs )
+      {
+        this->x -= rhs.x;
+        this->y -= rhs.y;
+        this->z -= rhs.z;
+        return *this;
+      }
 
     };
 

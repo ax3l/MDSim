@@ -98,10 +98,16 @@ namespace MDSIM
       
       /// Get the Cell number for a position
       ///
-      /// \param[in] vector3D<floatType> position
+      /// \param[in] vector3D<floatType> global position
+      /// \param[out] vector3D<floatType> local position in cell if
+      ///                                 positionToLocal is set to true
       /// \param[out] bool isGhost the position is a ghost cell
+      /// \param[in] bool positionToLocal set the position to the local position
+      ///                 within this cell
       /// \return int between [0; NrOfNonGhostCellsInDomain-1] or NotInDomain
-      inline int getCellNr( const vector3D<floatType>& pos, bool& isGhost ) const
+      inline int getCellNr( vector3D<floatType>& pos,
+                            bool& isGhost,
+                            const bool positionToLocal = false ) const
       {
         const int xCell = floor( ( pos.x - getFirstCellPos( true ).x )
                                  / simParams::cutoff );
@@ -115,6 +121,14 @@ namespace MDSIM
         if( xCell == 0 || xCell == _totalSizeX -1 ||
             yCell == 0 || yCell == _totalSizeY -1   )
           isGhost = true;
+        
+        if( positionToLocal )
+        {
+          const vector3D<floatType> offset( double(xCell) * simParams::cutoff,
+                                            double(yCell) * simParams::cutoff,
+                                            0.0 );
+          pos -= offset;
+        }
         
         return yCell * _totalSizeY + xCell;
       }
@@ -164,8 +178,11 @@ namespace MDSIM
       inline void addParticle( const Particle<floatType>& p,
                                const bool allowGhost = false )
       {
+        Particle<floatType> p_local( p );
+        vector3D<floatType> r_local( p_local.getPosition() );
+        
         bool isGhost = false;
-        const int cellNr = getCellNr( p.getPosition(), isGhost );
+        const int cellNr = getCellNr( r_local, isGhost, true );
         
         if( cellNr == NotInDomain || 
             ( isGhost == true && allowGhost == false ) )
@@ -176,7 +193,8 @@ namespace MDSIM
                     << std::endl;
         } else
         {
-          _cellMatrix.at( cellNr ).addParticle( p );
+          p_local.setPosition( r_local );
+          _cellMatrix.at( cellNr ).addParticle( p_local );
           //std::cout << "Added particle to cell nr. " << cellNr << std::endl;
         }
       }
@@ -204,6 +222,11 @@ namespace MDSIM
           }
       }
       
+      /// Calculate the NxN Forces
+      ///
+      /// \todo extract the Physics to physics/ and into classes
+      /// \todo calculate forces with particles in neighbor cells
+      ///
       inline void calculateForces( )
       {
         std::list<Particle<floatType> >* curParticleList;
@@ -245,6 +268,10 @@ namespace MDSIM
           }
       }
       
+      /// Move Particles
+      ///
+      /// Read the particles force vector and move it (non-SRT, Newtonian)
+      ///
       inline void moveParticles( )
       {
         std::list<Particle<floatType> >* curParticleList;
@@ -271,6 +298,8 @@ namespace MDSIM
           }
       }
       
+      /// Write out the global position for each particle
+      ///
       inline void coutParticlePos( )
       {
         std::list<Particle<floatType> >* curParticleList;
@@ -281,11 +310,16 @@ namespace MDSIM
           for( int y = 1; y < _totalSizeY -1; y++ )
           {
             curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
+            const vector3D<floatType> cellOffset( double(x) * simParams::cutoff,
+                                                  double(y) * simParams::cutoff,
+                                                  0.0 );
 
             // edit every velocity and move to next position
             for( p = curParticleList->begin( ); p != curParticleList->end( ); p++ )
             {
-              const vector3D<floatType> r( p->getPosition() );
+              const vector3D<floatType> r( p->getPosition()
+                                           + getFirstCellPos() // Domain Offset
+                                           + cellOffset );     // Cell in Domain)
               std::cout << r.x << " " << r.y << " " << r.z << std::endl;
             }
           }

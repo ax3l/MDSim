@@ -1,4 +1,4 @@
-# Makefile for MD Simulation
+# Makefile for my MD Simulation
 # Author : Axel Huebl
 # Version: 0.1
 # Date   : Januar 12, 2012
@@ -8,11 +8,11 @@ SrcSuf        = cpp
 OutPutOpt     = -o # keep whitespace after "-o"
 
 # do not use more than -O1 for MPI
-#CXX           = mpic++
-CXX           = g++
+CXX           = mpic++
+#CXX           = g++
 CXXFLAGS      = -O -c -Wall
-#LD            = mpic++
-LD            = g++
+LD            = mpic++
+#LD            = g++
 LDFLAGS       = -O
 
 #------------------------------------------------------------------------------
@@ -40,10 +40,10 @@ OBJS          = $(MDO)
 #all:            $(MDO)
 all:
 	$(CXX) $(CXXFLAGS) main.cpp
-	$(CXX) main.o
+	$(LD) $(LDFLAGS) main.o
 
 clean:
-	@rm -f $(OBJS) core
+	@rm -f $(OBJS) core *.o
 
 distclean:      clean
 
