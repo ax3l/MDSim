@@ -5,9 +5,11 @@
 #include <list>
 #include <cmath>
 #include <iostream>
+
 #include "cell.hpp"
 #include "particle.hpp"
 #include "vector3D.hpp"
+#include "../simulation_defines.hpp"
 
 namespace MDSIM
 {
@@ -41,60 +43,43 @@ namespace MDSIM
       Domain( const int sizeX,
               const int sizeY,
               const int x0,
-              const int y0 ) :
-      _totalSizeX( sizeX + 2 ),
-      _totalSizeY( sizeY + 2 ),
-      _x0( x0 ),
-      _y0( y0 )
-      {
-        _cellMatrix.reserve( sizeX * sizeY );
+              const int y0 );
 
-        for( int x = x0 - 1; x < x0 + sizeX + 1; x++ )
-          for( int y = y0 - 1; y < y0 + sizeY + 1; y++ )
-          {
-            Cell<floatType> c( x, y );
-            _cellMatrix.push_back( c );
-          }
-      }
-
-      ~Domain( )
-      {
-        _cellMatrix.clear( );
-      }
+      ~Domain( );
       
       enum {
         NotInDomain = -1
+      };
+      
+      enum {
+        Top    = 1u, // Y: Line 0
+        Bottom = 2u, // Y: Line ( _totalSizeY -1 )
+        Left   = 5u, // X: Column 0
+        Right  = 7u  // X: Column ( _totalSizeX -1 )
+      };
+      
+      enum {
+        XPeriodic = 1u,
+        YPeriodic = 2u
+      };
+      
+      enum {
+        AreaGhost  = 1u,
+        AreaBorder = 2u//,
+        //AreaCore   = 5u
       };
       
       /// Get the Real Position of the Beginning of this Domain
       ///
       /// \return vector3D<floatType> with offset for the first Cell in the Domain
       ///
-      inline vector3D<floatType> getFirstCellPos( const bool includeGhosts = false ) const
-      {
-        int ghosts = 0;
-        if( includeGhosts == true ) ghosts = -1;
-        
-        vector3D<floatType> r( ( _x0 + ghosts ) * simParams::cutoff,
-                               ( _y0 + ghosts ) * simParams::cutoff,
-                               0.0  );
-        return r;
-      }
+      vector3D<floatType> getFirstCellPos( const bool includeGhosts = false ) const;
       
       /// Get the Real Position of the End of this Domain
       ///
       /// \return vector3D<floatType> with the position of the last cells "right" border
       ///
-      inline vector3D<floatType> getLastCellPos( const bool includeGhosts = false ) const
-      {
-        int ghosts = 2;
-        if( includeGhosts == true ) ghosts = 1;
-        
-        vector3D<floatType> r( ( _x0 + _totalSizeX - ghosts ) * simParams::cutoff,
-                               ( _y0 + _totalSizeY - ghosts ) * simParams::cutoff,
-                               0.0  );
-        return r;
-      }
+      vector3D<floatType> getLastCellPos( const bool includeGhosts = false ) const;
       
       /// Get the Cell number for a position
       ///
@@ -105,67 +90,56 @@ namespace MDSIM
       /// \param[in] bool positionToLocal set the position to the local position
       ///                 within this cell
       /// \return int between [0; NrOfNonGhostCellsInDomain-1] or NotInDomain
-      inline int getCellNr( vector3D<floatType>& pos,
+      int getCellNr( vector3D<floatType>& pos,
                             bool& isGhost,
-                            const bool positionToLocal = false ) const
-      {
-        const int xCell = floor( ( pos.x - getFirstCellPos( true ).x )
-                                 / simParams::cutoff );
-        const int yCell = floor( ( pos.y - getFirstCellPos( true ).y )
-                                 / simParams::cutoff );
-        
-        if( xCell < 0 || xCell >= _totalSizeX ||
-            yCell < 0 || yCell >= _totalSizeY    )
-          return NotInDomain;
-        
-        if( xCell == 0 || xCell == _totalSizeX -1 ||
-            yCell == 0 || yCell == _totalSizeY -1   )
-          isGhost = true;
-        
-        if( positionToLocal )
-        {
-          const vector3D<floatType> offset( double(xCell) * simParams::cutoff,
-                                            double(yCell) * simParams::cutoff,
-                                            0.0 );
-          pos -= offset;
-        }
-        
-        return yCell * _totalSizeY + xCell;
-      }
+                            const bool positionToLocal = false ) const;
 
       /// Delete the particles within ghost cells
       ///
-      inline void clearGhostCells( )
-      {
-        for( int x = 0; x < _totalSizeX; x++ )
-          for( int y = 0; y < _totalSizeY; y++ )
-            if( x == 0 || x == _totalSizeX - 1 ||
-                y == 0 || y == _totalSizeY - 1 )
-              _cellMatrix.at( y * _totalSizeX + x ).clearParticles( );
-      }
+      void clearGhostCells( );
+      
+      /// Get Particles within an area (f.e. Domain-leavers, ghosts, border)
+      ///
+      /// \param[out] std::list<Particle<floatType>* > list of pointers to
+      ///                                              particles
+      /// \param[in] unsigned int direction; Top, Bottom, Left or Right
+      //  \param[in] unsigned int area; AreaGhost or AreaBorder
+      ///
+      void getArea( std::list<Particle<floatType>* >& p,
+                    const unsigned int direction,
+                    const unsigned int area );
+      
+      /// Mark Particles for Removal from this Domain
+      ///
+      /// Marks particles as inactive.
+      /// Removal \see removeParticles
+      ///
+      /// \param[in] std::list<Particle<floatType>* > list of pointers to
+      ///                                             particles
+      ///
+      //void markParticlesForRemoval( std::list<Particle<floatType>* >& p );
+      
+      /// Move Particles from Ghost to opposite border area
+      ///
+      /// Move Particles from Ghost to opposite border area with a specified
+      /// direction
+      ///
+      /// \param[in] std::list<Particle<floatType>* > list of pointers to
+      ///                                             particles
+      /// \param[in const unsigned int periodic, XPeriodic or YPeriodic
+      ///
+      void moveInnerDomainPeriodic( std::list<Particle<floatType>* >& p,
+                                    const unsigned int periodic );
+      
+      /// Remove Particles from this Domain
+      ///
+      /// Removes inaktive marked particles.
+      ///
+      //void removeParticles( );
 
-      inline void mapParticlesToCells( )
-      {
-        std::list<Particle<floatType> >* curParticleList;
-        typename std::list<Particle<floatType> >::iterator p;
-
-        // walk trough all cells in this domain which (with ghosts)
-        for( int x = 0; x < _totalSizeX; x++ )
-          for( int y = 0; y < _totalSizeY; y++ )
-          {
-            _cellMatrix.at( y * _totalSizeX + x ).getParticleList( curParticleList );
-
-            // check for <0. and >=1. in local pos of particle
-            for( p = curParticleList->begin( ); p != curParticleList->end( ); p++ )
-            {
-              std::cout << p->getMass( ) << std::endl;
-              /// \todo check for <0. and >=1. in local pos of particle
-            }
-
-            /// \todo add to other cell (left, right, top, bottom)
-            /// \todo remove particle from list
-          }
-      }
+      /// \todo this... and impl., too?
+      ///
+      void mapParticlesToCells( );
 
       /// Add a particle to this Domain
       ///
@@ -175,157 +149,35 @@ namespace MDSIM
       /// \param[in] bool allowGhost, allows to add a particle to the ghost
       ///                             cell regions
       ///
-      inline void addParticle( const Particle<floatType>& p,
-                               const bool allowGhost = false )
-      {
-        Particle<floatType> p_local( p );
-        vector3D<floatType> r_local( p_local.getPosition() );
-        
-        bool isGhost = false;
-        const int cellNr = getCellNr( r_local, isGhost, true );
-        
-        if( cellNr == NotInDomain || 
-            ( isGhost == true && allowGhost == false ) )
-        {
-          std::cout << "ERROR: Position( " << p.getPosition().x << " "
-                    << p.getPosition().y << " " << p.getPosition().z
-                    << " ) not in Domain! (isGhost: " << isGhost << ")"
-                    << std::endl;
-        } else
-        {
-          p_local.setPosition( r_local );
-          _cellMatrix.at( cellNr ).addParticle( p_local );
-          //std::cout << "Added particle to cell nr. " << cellNr << std::endl;
-        }
-      }
+      void addParticle( const Particle<floatType>& p,
+                        const bool allowGhost = false );
 
       /// Resets the Forces for each Particle
       ///
       /// (without ghosts)
       ///
-      inline void resetForces( )
-      {
-        std::list<Particle<floatType> >* curParticleList;
-        typename std::list<Particle<floatType> >::iterator p;
-
-        // walk trough all cells in this domain which are not ghosts
-        for( int x = 1; x < _totalSizeX - 1; x++ )
-          for( int y = 1; y < _totalSizeY - 1; y++ )
-          {
-            curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
-
-            // walk through all particles within this cell
-            for( p = curParticleList->begin( ); p != curParticleList->end( ); p++ )
-            {
-              p->resetForce();
-            }
-          }
-      }
+      void resetForces( );
       
       /// Calculate the NxN Forces
       ///
       /// \todo extract the Physics to physics/ and into classes
       /// \todo calculate forces with particles in neighbor cells
       ///
-      inline void calculateForces( )
-      {
-        std::list<Particle<floatType> >* curParticleList;
-        typename std::list<Particle<floatType> >::iterator p1, p2;
-
-        // walk trough all cells in this domain which are not ghosts
-        for( int x = 1; x < _totalSizeX - 1; x++ )
-          for( int y = 1; y < _totalSizeY - 1; y++ )
-          {
-            curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
-
-            // calculcate in-cell-forces - NxN
-            for( p1 = curParticleList->begin( ); p1 != curParticleList->end( ); p1++ )
-            {
-              p1->resetForce();
-              // calculcate in-cell-forces - NxN
-              for( p2 = p1; p2 != curParticleList->end( ); p2++ )
-              {
-                if( p2 == p1 ) continue;
-                
-                // F = G*m1*m2/r^2
-                vector3D<floatType> r( p2->getPosition() - p1->getPosition() );
-                vector3D<floatType> er( r / sqrt( r.abs2( ) ) );
-                
-                const floatType fAbsTmp = simParams::G * p1->getMass( ) * p2->getMass( );
-                const floatType fAbs = fAbsTmp / r.abs2();
-                
-                vector3D<floatType> force( fAbs * er.x, fAbs * er.y, 0.0 );
-                //std::cout << "Er: " << force.x << " " << force.y << " " << force.z << std::endl;
-                //std::cout << "G: " << simParams::G << std::endl;
-                
-                p1->addForce( force );
-                p2->addForce( force*(-1.0) );
-              }
-              
-              /// \todo forces with particles in neighbor cells
-              
-            }
-          }
-      }
+      void calculateForces( );
       
       /// Move Particles
       ///
       /// Read the particles force vector and move it (non-SRT, Newtonian)
       ///
-      inline void moveParticles( )
-      {
-        std::list<Particle<floatType> >* curParticleList;
-        typename std::list<Particle<floatType> >::iterator p;
-
-        // walk trough all cells in this domain which are not ghosts
-        for( int x = 1; x < _totalSizeX - 1; x++ )
-          for( int y = 1; y < _totalSizeY - 1; y++ )
-          {
-            curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
-
-            // edit every velocity and move to next position
-            for( p = curParticleList->begin( ); p != curParticleList->end( ); p++ )
-            {
-              // Newton: F = dp/dt = m * dv/dt
-              // dv = F / m * dt
-              p->addVelocity( p->getForce() / p->getMass() * simParams::dt );
-              
-              // Move Particle: ds = v * dt
-              p->addPosition( p->getVelocity() * simParams::dt );
-              //std::cout << "Move: " << p->getVelocity().x << " " << p->getVelocity().y << " " << p->getVelocity().z << std::endl;
-              
-            }
-          }
-      }
+      void moveParticles( );
       
       /// Write out the global position for each particle
       ///
-      inline void coutParticlePos( )
-      {
-        std::list<Particle<floatType> >* curParticleList;
-        typename std::list<Particle<floatType> >::iterator p;
-
-        // walk trough all cells in this domain which are not ghosts
-        for( int x = 1; x < _totalSizeX -1; x++ )
-          for( int y = 1; y < _totalSizeY -1; y++ )
-          {
-            curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
-            const vector3D<floatType> cellOffset( double(x) * simParams::cutoff,
-                                                  double(y) * simParams::cutoff,
-                                                  0.0 );
-
-            // edit every velocity and move to next position
-            for( p = curParticleList->begin( ); p != curParticleList->end( ); p++ )
-            {
-              const vector3D<floatType> r( p->getPosition()
-                                           + getFirstCellPos() // Domain Offset
-                                           + cellOffset );     // Cell in Domain)
-              std::cout << r.x << " " << r.y << " " << r.z << std::endl;
-            }
-          }
-      }
+      void coutParticlePos( );
 
     };
+    
+#include "domain.tpp"
 
   } // namespace memory
 } // namespace MDSIM

@@ -13,7 +13,7 @@ namespace MDSIM
     /// A standard particle with its Attributes.
     ///
     /// \tparam floatType Double of Float: for Particle Attributes
-
+    ///
     template <typename floatType>
     class Particle
     {
@@ -25,29 +25,37 @@ namespace MDSIM
       /// \todo calculate with impulses using SRT
       vector3D<floatType> _force;
       floatType _mass;
+      bool _active;
 
     public:
 
       Particle( const vector3D<floatType> pos,
                 const vector3D<floatType> vel,
                 const floatType mass ) :
-      _position( pos ),
-      _velocity( vel ),
-      _force( 0. ),
-      _mass( mass )
+        _position( pos ),
+        _velocity( vel ),
+        _force( 0. ),
+        _mass( mass ),
+        _active( true )
       {
       }
 
       Particle( const Particle<floatType>& p ) :
-      _position( p.getPosition( ) ),
-      _velocity( p.getVelocity( ) ),
-      _force( p.getForce( ) ),
-      _mass( p.getMass( ) )
+        _position( p.getPosition( ) ),
+        _velocity( p.getVelocity( ) ),
+        _force( p.getForce( ) ),
+        _mass( p.getMass( ) ),
+        _active( p.getActive() )
       {
       }
 
       ~Particle( )
       {
+      }
+      
+      inline const bool getActive( ) const
+      {
+        return _active;
       }
 
       inline vector3D<floatType> getPosition( ) const
@@ -75,6 +83,11 @@ namespace MDSIM
         _force.x = 0.0;
         _force.y = 0.0;
         _force.z = 0.0;
+      }
+      
+      inline void setActive( const bool status )
+      {
+        _active = status;
       }
       
       inline void setPosition( const vector3D<floatType>& off )
