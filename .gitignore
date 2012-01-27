@@ -1,5 +1,8 @@
 documents
 *~
 a.out
+*.ar
+*.o
+*.dat
 
 /nbproject/private/
