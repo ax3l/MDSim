@@ -101,6 +101,20 @@ Domain<floatType>::getArea( std::list<Particle<floatType>* >& p,
                             const unsigned int area )
 {
   std::cout << "ERROR: not implemented!" << std::endl;
+  
+  if( ( area & this->AreaGhost ) == this->AreaGhost )
+  {
+    //std::cout << "Info: AreaGhost selected" << std::endl;
+    
+  }
+    
+  
+  if( ( area & this->AreaBorder ) == this->AreaBorder )
+  {
+    //std::cout << "Info: AreaBorder selected" << std::endl;
+    
+  }
+  
 }
 
 template <typename floatType>

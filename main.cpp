@@ -113,7 +113,7 @@ main( int argc, char *argv[] )
     // in-Domain: periodic movement
     std::list<memory::Particle<double>* > pIn;
     myDomain.getArea( pIn,
-                      myDomain.Left + myDomain.Right,
+                      myDomain.Left | myDomain.Right,
                       myDomain.AreaGhost );
     myDomain.moveInnerDomainPeriodic( pIn,
                                       myDomain.XPeriodic );
@@ -124,12 +124,12 @@ main( int argc, char *argv[] )
     std::list<memory::Particle<double>* > pOutTop;
     myDomain.getArea( pOutTop,
                       myDomain.Top,
-                      myDomain.AreaBorder + myDomain.AreaGhost );
+                      myDomain.AreaBorder | myDomain.AreaGhost );
     /// \todo send particle to top neighbor (pos, vel, mass)
     std::list<memory::Particle<double>* > pOutBottom;
     myDomain.getArea( pOutBottom,
                       myDomain.Bottom,
-                      myDomain.AreaBorder + myDomain.AreaGhost );
+                      myDomain.AreaBorder | myDomain.AreaGhost );
     /// \todo send particle to bottom neighbor (pos, vel, mass)
     
     /// \todo receive particles

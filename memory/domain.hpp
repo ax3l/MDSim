@@ -47,23 +47,23 @@ namespace MDSIM
 
       ~Domain( );
       
-      enum {
+      enum Status {
         NotInDomain = -1
       };
       
-      enum {
+      enum Direction {
         Top    = 1u, // Y: Line 0
         Bottom = 2u, // Y: Line ( _totalSizeY -1 )
         Left   = 5u, // X: Column 0
         Right  = 7u  // X: Column ( _totalSizeX -1 )
       };
       
-      enum {
+      enum PeriodicType {
         XPeriodic = 1u,
         YPeriodic = 2u
       };
       
-      enum {
+      enum AreaType {
         AreaGhost  = 1u,
         AreaBorder = 2u//,
         //AreaCore   = 5u
