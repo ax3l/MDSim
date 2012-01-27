@@ -119,8 +119,8 @@ Domain<floatType>::mapParticlesToCells( )
   typename std::list<Particle<floatType> >::iterator p;
 
   // walk trough all cells in this domain which (with ghosts)
-  for( int x = 0; x < _totalSizeX; x++ )
-    for( int y = 0; y < _totalSizeY; y++ )
+  for( int y = 0; y < _totalSizeY; y++ )
+    for( int x = 0; x < _totalSizeX; x++ )
     {
       curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
 
@@ -171,8 +171,8 @@ Domain<floatType>::resetForces( )
   typename std::list<Particle<floatType> >::iterator p;
 
   // walk trough all cells in this domain which are not ghosts
-  for( int x = 1; x < _totalSizeX - 1; x++ )
-    for( int y = 1; y < _totalSizeY - 1; y++ )
+  for( int y = 1; y < _totalSizeY - 1; y++ )
+    for( int x = 1; x < _totalSizeX - 1; x++ )
     {
       curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
 
@@ -192,8 +192,8 @@ Domain<floatType>::calculateForces( )
   typename std::list<Particle<floatType> >::iterator p1, p2;
 
   // walk trough all cells in this domain which are not ghosts
-  for( int x = 1; x < _totalSizeX - 1; x++ )
-    for( int y = 1; y < _totalSizeY - 1; y++ )
+  for( int y = 1; y < _totalSizeY - 1; y++ )
+    for( int x = 1; x < _totalSizeX - 1; x++ )
     {
       curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
 
@@ -235,8 +235,8 @@ Domain<floatType>::moveParticles( )
   typename std::list<Particle<floatType> >::iterator p;
 
   // walk trough all cells in this domain which are not ghosts
-  for( int x = 1; x < _totalSizeX - 1; x++ )
-    for( int y = 1; y < _totalSizeY - 1; y++ )
+  for( int y = 1; y < _totalSizeY - 1; y++ )
+    for( int x = 1; x < _totalSizeX - 1; x++ )
     {
       curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
 
