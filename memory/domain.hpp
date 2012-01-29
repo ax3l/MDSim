@@ -54,8 +54,8 @@ namespace MDSIM
       enum Direction {
         Top    = 1u, // Y: Line 0
         Bottom = 2u, // Y: Line ( _totalSizeY -1 )
-        Left   = 5u, // X: Column 0
-        Right  = 7u  // X: Column ( _totalSizeX -1 )
+        Left   = 4u, // X: Column 0
+        Right  = 8u  // X: Column ( _totalSizeX -1 )
       };
       
       enum PeriodicType {
@@ -66,7 +66,7 @@ namespace MDSIM
       enum AreaType {
         AreaGhost  = 1u,
         AreaBorder = 2u//,
-        //AreaCore   = 5u
+        //AreaCore   = 4u
       };
       
       /// Get the Real Position of the Beginning of this Domain
@@ -100,14 +100,14 @@ namespace MDSIM
       
       /// Get Particles within an area (f.e. Domain-leavers, ghosts, border)
       ///
-      /// \param[out] std::list<Particle<floatType>* > list of pointers to
-      ///                                              particles
-      /// \param[in] unsigned int direction; Top, Bottom, Left or Right
-      //  \param[in] unsigned int area; AreaGhost or AreaBorder
+      /// \param[in] unsigned int direction; Top, Bottom, Left and/or Right
+      /// \param[in] unsigned int area; AreaGhost and/or AreaBorder
+      /// \return std::list<Particle<floatType>* > list of pointers to
+      ///                                          particles
       ///
-      void getArea( std::list<Particle<floatType>* >& p,
-                    const unsigned int direction,
-                    const unsigned int area );
+      std::list<Particle<floatType>* >
+      getArea( const unsigned int direction,
+               const unsigned int area );
       
       /// Mark Particles for Removal from this Domain
       ///

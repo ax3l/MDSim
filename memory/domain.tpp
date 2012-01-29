@@ -11,6 +11,13 @@ Domain<floatType>::Domain( const int sizeX,
   _x0( x0 ),
   _y0( y0 )
 {
+  if( sizeX < 3 )
+    std::cout << "ERROR: SizeX must be at least 3 (is: " << sizeX << ")"
+              << std::endl;
+  if( sizeY < 3 )
+    std::cout << "ERROR: SizeY must be at least 3 (is: " << sizeY << ")"
+              << std::endl;
+  
   _cellMatrix.reserve( sizeX * sizeY );
 
   for( int x = x0 - 1; x < x0 + sizeX + 1; x++ )
@@ -74,10 +81,12 @@ Domain<floatType>::getCellNr( vector3D<floatType>& pos,
 
   if( positionToLocal )
   {
-    const vector3D<floatType> offset( double( xCell ) * simParams::cutoff,
-                                      double( yCell ) * simParams::cutoff,
+    const vector3D<floatType> offset( double( xCell -1 ) * simParams::cutoff,
+                                      double( yCell -1 ) * simParams::cutoff,
                                       0.0 );
     pos -= offset;
+    //std::cout << "Info: local pos ("
+    //          << pos.x << ", " << pos.y << ")" << std::endl;
   }
 
   return yCell * _totalSizeX + xCell;
@@ -95,26 +104,87 @@ Domain<floatType>::clearGhostCells( )
 }
 
 template <typename floatType>
-void
-Domain<floatType>::getArea( std::list<Particle<floatType>* >& p,
+std::list<Particle<floatType>* >
+Domain<floatType>::getArea( //std::list<Particle<floatType>* >& p,
                             const unsigned int direction,
                             const unsigned int area )
 {
-  std::cout << "ERROR: not implemented!" << std::endl;
+  std::list<Particle<floatType>* > p;
   
-  if( ( area & this->AreaGhost ) == this->AreaGhost )
+  std::list<Particle<floatType> >* curParticleList;
+  typename std::list<Particle<floatType> >::iterator pInCell;
+  
+  for( int y = 0; y < _totalSizeY; y++ )
   {
-    //std::cout << "Info: AreaGhost selected" << std::endl;
-    
+    for( int x = 0; x < _totalSizeX; x++ )
+    {
+      bool ok = false;
+      
+      // TOP
+      if( ( direction & this->Top ) == this->Top 
+          && y <= 1 )
+      {
+        if( ( area & this->AreaGhost ) == this->AreaGhost
+          && y == 0 )
+          ok = true;
+        if( ( area & this->AreaBorder ) == this->AreaBorder
+            && y == 1 )
+          ok = true;
+      }
+      
+      // BOTTOM
+      if( ( direction & this->Bottom ) == this->Bottom
+          && y >= _totalSizeY -2 )
+      {
+        if( ( area & this->AreaGhost ) == this->AreaGhost
+            && y == _totalSizeY -1 )
+          ok = true;
+        if( ( area & this->AreaBorder ) == this->AreaBorder
+            && y == _totalSizeY -2 )
+          ok = true;
+      }
+      
+      // LEFT
+      if( ( direction & this->Left ) == this->Left
+          && x <= 1 )
+      {
+        if( ( area & this->AreaGhost ) == this->AreaGhost
+            && x == 0 )
+          ok = true;
+        if( ( area & this->AreaBorder ) == this->AreaBorder
+            && x == 1 )
+          ok = true;
+      }
+      
+      // RIGHT
+      if( ( direction & this->Right ) == this->Right
+          && x >= _totalSizeX -2 )
+      {
+        if( ( area & this->AreaGhost ) == this->AreaGhost
+            && x == _totalSizeX - 1 )
+          ok = true;
+        if( ( area & this->AreaBorder ) == this->AreaBorder
+            && x == _totalSizeX - 2 )
+          ok = true;
+      }
+      
+      if( ok == false )
+        continue;
+      
+      //std::cout << "ok! (" << x  << ", "  << x  << ")" << std::endl;
+      
+      // add particles of this cell
+      curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
+      
+      for( pInCell = curParticleList->begin( ); pInCell != curParticleList->end( ); pInCell++ )
+      {
+        //std::cout << "Info: Found particle!" << std::endl;
+        p.push_back( &(*pInCell) );
+      }
+    }
   }
-    
   
-  if( ( area & this->AreaBorder ) == this->AreaBorder )
-  {
-    //std::cout << "Info: AreaBorder selected" << std::endl;
-    
-  }
-  
+  return p;
 }
 
 template <typename floatType>
@@ -122,7 +192,40 @@ void
 Domain<floatType>::moveInnerDomainPeriodic( std::list<Particle<floatType>* >& p,
                                             const unsigned int periodic )
 {
-  std::cout << "ERROR: not implemented!" << std::endl;
+  if( ( periodic & this->XPeriodic ) != this->XPeriodic )
+    std::cout << "Error: Not implemented!" << std::endl;
+  
+  std::list<Particle<floatType> >* curParticleList;
+  std::list<Particle<floatType> >* moveToParticleList;
+  typename std::list<Particle<floatType> >::iterator pInCell;
+
+  // go through LEFT and RIGHT ghosts
+  for( int y = 0; y < _totalSizeY; y++ )
+    for( int x = 0; x < _totalSizeX; x+= _totalSizeX -1 )
+    {
+      curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
+
+      // check for <0. and >=1. in local pos of particle
+      for( pInCell = curParticleList->begin( ); pInCell != curParticleList->end( ); pInCell++ )
+      {
+        
+        if( x == 0 )
+        {
+          moveToParticleList = _cellMatrix.at( y * _totalSizeX + _totalSizeX -2 ).getParticleList( );
+          moveToParticleList->push_back( (*pInCell) );
+          //std::cout << "Info: x-periodic to cell ("
+          //          << _totalSizeX -2 << ", " << y << ")" << std::endl;
+        }
+        if( x == _totalSizeX -1 )
+        {
+          moveToParticleList = _cellMatrix.at( y * _totalSizeX + 1 ).getParticleList( );
+          moveToParticleList->push_back( (*pInCell) );
+          //std::cout << "Info: x-periodic to cell ("
+          //          << _totalSizeX +1 << ", " << y << ")" << std::endl;
+        }
+      }
+      curParticleList->clear();
+    }
 }
 
 template <typename floatType>
@@ -130,7 +233,11 @@ void
 Domain<floatType>::mapParticlesToCells( )
 {
   std::list<Particle<floatType> >* curParticleList;
+  std::list<Particle<floatType> >* moveToParticleList;
   typename std::list<Particle<floatType> >::iterator p;
+  
+  int xOff;
+  int yOff;
 
   // walk trough all cells in this domain which (with ghosts)
   for( int y = 0; y < _totalSizeY; y++ )
@@ -141,12 +248,41 @@ Domain<floatType>::mapParticlesToCells( )
       // check for <0. and >=1. in local pos of particle
       for( p = curParticleList->begin( ); p != curParticleList->end( ); p++ )
       {
-        std::cout << p->getMass( ) << std::endl;
-        /// \todo check for <0. and >=1. in local pos of particle
-      }
+        //std::cout << p->getMass( ) << std::endl;
+        vector3D<floatType> r_local( p->getPosition( ) );
+        
+        xOff = 0;
+        yOff = 0;
+        
+        if( r_local.x >= 1.0 )
+          xOff=1;
+        if( r_local.x <  0.0 )
+          xOff=-1;
+        if( r_local.y >= 1.0 )
+          yOff=1;
+        if( r_local.y <  0.0 )
+          yOff=-1;
+        
+        if( x + xOff >= _totalSizeX || x + xOff < 0 )
+          std::cout << "ERROR: x even out of Ghost" << std::endl;
+        if( y + yOff >= _totalSizeY || y + yOff < 0 )
+          std::cout << "ERROR: y even out of Ghost" << std::endl;
+        
+        if( xOff != 0 || yOff != 0 )
+        {
+          //std::cout << "Info: map particle to next cell ("
+          //          << ( x + xOff ) << ", " << ( y + yOff ) << ")" << std::endl;
+          
+          vector3D<floatType> r_Off( -1.0*double(xOff), -1.0*double(yOff), 0.0 );
+          p->addPosition( r_Off );
+          
+          moveToParticleList = _cellMatrix.at( ( y + yOff ) * _totalSizeX + ( x + xOff ) ).getParticleList( );
+          moveToParticleList->push_back( ( *p ) );
 
-      /// \todo add to other cell (left, right, top, bottom)
-      /// \todo remove particle from list
+          curParticleList->erase( p );
+          p--;
+        }
+      }
     }
 }
 
@@ -281,8 +417,8 @@ Domain<floatType>::coutParticlePos( )
     for( int x = 1; x < _totalSizeX - 1; x++ )
     {
       curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
-      const vector3D<floatType> cellOffset( double( x ) * simParams::cutoff,
-                                            double( y ) * simParams::cutoff,
+      const vector3D<floatType> cellOffset( double( x -1 ) * simParams::cutoff,
+                                            double( y -1 ) * simParams::cutoff,
                                             0.0 );
 
       // edit every velocity and move to next position
@@ -290,8 +426,10 @@ Domain<floatType>::coutParticlePos( )
       {
         const vector3D<floatType> r( p->getPosition( )
                                      + getFirstCellPos( ) // Domain Offset
-                                     + cellOffset ); // Cell in Domain)
-        std::cout << r.x << " " << r.y << " " << r.z << std::endl;
+                                     + cellOffset );      // Cell in Domain
+        std::cout << r.x << " " << r.y << " " << r.z
+                  << " cell(" << x << ", " << y << ")"
+                  << std::endl;
       }
     }
 }

@@ -43,7 +43,6 @@ main( int argc, char *argv[] )
   ///       - weighting function (left, right, min-relative-difference of n-%)
   ///       - swap cell-lines to left or right
 
-  /// \todo set option: x-direction periodic (y-direction option by MPI)
   /// \todo capsule physics as template parameter
   /// \todo (optional) capsule particle attributes / sheme, too
 
@@ -95,41 +94,36 @@ main( int argc, char *argv[] )
 
   // initialize particles
   myDomain.addParticle( earth );
-  myDomain.addParticle( sun );
+  //myDomain.addParticle( sun );
 
   myDomain.coutParticlePos();
   for( double t = 0.0; t < simParams::simTime; t += simParams::dt )
   {
     myDomain.resetForces();
     
+    /// \todo also for NxN with next neighbors!
     myDomain.calculateForces();
     myDomain.clearGhostCells();
     
     myDomain.moveParticles();
-    /// \todo check implementation!
-    /// \todo add error output for not-in-domain any more (2-cell-jump)
-    //myDomain.mapParticlesToCells();
+    myDomain.mapParticlesToCells();
     
     // in-Domain: periodic movement
-    std::list<memory::Particle<double>* > pIn;
-    myDomain.getArea( pIn,
-                      myDomain.Left | myDomain.Right,
-                      myDomain.AreaGhost );
+    std::list<memory::Particle<double>* > pIn =
+      myDomain.getArea( myDomain.Left | myDomain.Right,
+                        myDomain.AreaGhost );
     myDomain.moveInnerDomainPeriodic( pIn,
                                       myDomain.XPeriodic );
-    pIn.clear();
     
     // out-of-Domain: MPI Swap to next real Domain and Cloning of
     //                border particles to neighbor ghosts
-    std::list<memory::Particle<double>* > pOutTop;
-    myDomain.getArea( pOutTop,
-                      myDomain.Top,
-                      myDomain.AreaBorder | myDomain.AreaGhost );
+    std::list<memory::Particle<double>* > pOutTop =
+      myDomain.getArea( myDomain.Top,
+                        myDomain.AreaBorder | myDomain.AreaGhost );
     /// \todo send particle to top neighbor (pos, vel, mass)
-    std::list<memory::Particle<double>* > pOutBottom;
-    myDomain.getArea( pOutBottom,
-                      myDomain.Bottom,
-                      myDomain.AreaBorder | myDomain.AreaGhost );
+    std::list<memory::Particle<double>* > pOutBottom =
+      myDomain.getArea( myDomain.Bottom,
+                        myDomain.AreaBorder | myDomain.AreaGhost );
     /// \todo send particle to bottom neighbor (pos, vel, mass)
     
     /// \todo receive particles
