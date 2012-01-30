@@ -93,8 +93,19 @@ namespace MDSIM
         //if( ( direction & this->Top ) == this->Top )
         
         /// \todo ....
-        /// MPI_CART_SHIFT
-        /// MPI_SENDRECV
+        /// use different tag for posOnly true or false
+        /// create long array (or std::vector) with doubles
+        ///
+        /// Send:
+        ///   MPI_CART_SHIFT
+        ///   MPI_ISEND
+        ///   -> return the ISend Request as a handle and allow
+        ///      the user to call a barrier later with it
+        /// 
+        /// New Method: Receive
+        ///   MPI_Probe
+        ///   MPI_Get_Count auf MPI_DOUBLE
+        ///   MPI_Recv
       }
       
     };
