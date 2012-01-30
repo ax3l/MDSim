@@ -1,50 +1,37 @@
 # Makefile for my MD Simulation
 # Author : Axel Huebl
 # Version: 0.1
-# Date   : Januar 12, 2012
+# Date   : Januar 27, 2012
 
 ObjSuf        = o
 SrcSuf        = cpp
-LibSuf        = ar
 OutPutOpt     = -o # keep whitespace after "-o"
 
 # do not use more than -O1 for MPI
 CXX           = mpic++
 #CXX           = g++
 CXXFLAGS      = -O -c -Wall
-LD            = mpic++
-#LD            = g++
-LDFLAGS       = -O
 
 #------------------------------------------------------------------------------
 
-OBJS      = 
-LIBS      = memory/memory.ar             \
-            physics/physics.ar           \
-            communicator/communicator.ar 
+ARNAME    = $(shell basename `pwd`).ar
+
+OBJS      = $(shell ls *.$(SrcSuf) 2>/dev/null)
 
 #------------------------------------------------------------------------------
 
-.SUFFIXES: .$(SrcSuf) .$(ObjSuf) .$(LibSuf)
+.SUFFIXES: .$(SrcSuf) .$(ObjSuf)
 
-all:            $(OBJS) $(LIBS)
-	$(LD) $(LDFLAGS) main.cpp $(LIBS)
+all:            $(OBJS)
+	ar rcs $(ARNAME) $(OBJS)
 
 clean:
-	@rm -f $(OBJS) core *.o
-	for i in $(LIBS); do cd `dirname $$i` && $(MAKE) clean && cd -; done
-
-distclean:      clean
-
-#.SUFFIXES: .$(SrcSuf)
+	@rm -f $(OBJS) $(ARNAME)
 
 ###
 
 #%.$(ObjSuf): %.$(SrcSuf)
 #	$(CXX) $(CXXFLAGS) -c $<
-
-$(LIBS):
-	cd `dirname $@` && $(MAKE)
 
 .$(SrcSuf).$(ObjSuf):
 	$(CXX) $(CXXFLAGS) -c $<
