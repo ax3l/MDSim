@@ -102,10 +102,10 @@ namespace MDSIM
       ///
       /// \param[in] unsigned int direction; Top, Bottom, Left and/or Right
       /// \param[in] unsigned int area; AreaGhost and/or AreaBorder
-      /// \return std::list<Particle<floatType>* > list of pointers to
-      ///                                          particles
+      /// \return std::list<Particle<floatType> > list of particles with global
+      ///                                         positions
       ///
-      std::list<Particle<floatType>* >
+      std::list<Particle<floatType> >
       getArea( const unsigned int direction,
                const unsigned int area );
       
@@ -124,12 +124,9 @@ namespace MDSIM
       /// Move Particles from Ghost to opposite border area with a specified
       /// direction
       ///
-      /// \param[in] std::list<Particle<floatType>* > list of pointers to
-      ///                                             particles
       /// \param[in const unsigned int periodic, XPeriodic or YPeriodic
       ///
-      void moveInnerDomainPeriodic( std::list<Particle<floatType>* >& p,
-                                    const unsigned int periodic );
+      void moveInnerDomainPeriodic( const unsigned int periodic );
       
       /// Remove Particles from this Domain
       ///

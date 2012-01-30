@@ -75,6 +75,28 @@ namespace MDSIM
       {
         return _size;
       }
+      
+      /// Send Particles to an other node
+      ///
+      /// \param[in] std::list<memory::Particle<double> > byRef with global
+      ///                                                 positions
+      /// \param[in] const unsigned int direction, Top or Bottom
+      /// \param[in] bool posOnly send only positions or complete particle
+      ///
+      void
+      sendParticles( std::list<memory::Particle<double> >& p,
+                     const unsigned int direction,
+                     const bool posOnly)
+      {
+        std::cout << "Error: Not implemented!" << std::endl;
+        
+        //if( ( direction & this->Top ) == this->Top )
+        
+        /// \todo ....
+        /// MPI_CART_SHIFT
+        /// MPI_SENDRECV
+      }
+      
     };
 
   } // namespace communicator

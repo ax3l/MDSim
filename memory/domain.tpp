@@ -104,12 +104,11 @@ Domain<floatType>::clearGhostCells( )
 }
 
 template <typename floatType>
-std::list<Particle<floatType>* >
-Domain<floatType>::getArea( //std::list<Particle<floatType>* >& p,
-                            const unsigned int direction,
+std::list<Particle<floatType> >
+Domain<floatType>::getArea( const unsigned int direction,
                             const unsigned int area )
 {
-  std::list<Particle<floatType>* > p;
+  std::list<Particle<floatType> > p;
   
   std::list<Particle<floatType> >* curParticleList;
   typename std::list<Particle<floatType> >::iterator pInCell;
@@ -175,11 +174,18 @@ Domain<floatType>::getArea( //std::list<Particle<floatType>* >& p,
       
       // add particles of this cell
       curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
+      const vector3D<floatType> cellOffset( double( x -1 ) * simParams::cutoff,
+                                            double( y -1 ) * simParams::cutoff,
+                                            0.0 );
       
       for( pInCell = curParticleList->begin( ); pInCell != curParticleList->end( ); pInCell++ )
       {
         //std::cout << "Info: Found particle!" << std::endl;
-        p.push_back( &(*pInCell) );
+        p.push_back( (*pInCell) );
+        
+        const vector3D<floatType> r( getFirstCellPos( )   // Domain Offset
+                                     + cellOffset );      // Cell in Domain
+        p.back().addPosition( r );
       }
     }
   }
@@ -189,7 +195,7 @@ Domain<floatType>::getArea( //std::list<Particle<floatType>* >& p,
 
 template <typename floatType>
 void
-Domain<floatType>::moveInnerDomainPeriodic( std::list<Particle<floatType>* >& p,
+Domain<floatType>::moveInnerDomainPeriodic( //std::list<Particle<floatType>* >& p,
                                             const unsigned int periodic )
 {
   if( ( periodic & this->XPeriodic ) != this->XPeriodic )

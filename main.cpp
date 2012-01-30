@@ -90,22 +90,19 @@ main( int argc, char *argv[] )
     myDomain.mapParticlesToCells();
     
     // in-Domain: periodic movement
-    std::list<memory::Particle<double>* > pIn =
-      myDomain.getArea( myDomain.Left | myDomain.Right,
-                        myDomain.AreaGhost );
-    myDomain.moveInnerDomainPeriodic( pIn,
-                                      myDomain.XPeriodic );
+    myDomain.moveInnerDomainPeriodic( myDomain.XPeriodic );
     
     // out-of-Domain: MPI Swap to next real Domain and Cloning of
     //                border particles to neighbor ghosts
-    std::list<memory::Particle<double>* > pOutTop =
+    std::list<memory::Particle<double> > pOutTop =
       myDomain.getArea( myDomain.Top,
                         myDomain.AreaBorder | myDomain.AreaGhost );
-    /// \todo send particle to top neighbor (pos, vel, mass)
-    std::list<memory::Particle<double>* > pOutBottom =
+    comm.sendParticles( pOutTop, comm.Top, false );
+    
+    std::list<memory::Particle<double> > pOutBottom =
       myDomain.getArea( myDomain.Bottom,
                         myDomain.AreaBorder | myDomain.AreaGhost );
-    /// \todo send particle to bottom neighbor (pos, vel, mass)
+    comm.sendParticles( pOutBottom, comm.Bottom, false );
     
     /// \todo receive particles
     
