@@ -2,7 +2,14 @@
 #define MPI_COMMUNICATOR_HPP
 
 #include <mpi.h>
+
 #include <iostream>
+#include <map>
+#include <utility> // for pair
+#include <vector>
+
+#include "../memory/particle.hpp"
+#include "../memory/vector3D.hpp"
 
 namespace MDSIM
 {
@@ -15,6 +22,7 @@ namespace MDSIM
     private:
       int _rank, _size;
       MPI_Comm _comm_cart;
+      std::map<MPI_Request, std::vector<double>* > _dataOut;
       
       // Hide Constructors
       MPI_Communicator()
@@ -49,6 +57,8 @@ namespace MDSIM
       }
       
     public:
+      typedef MPI_Request handle;
+      
       enum Direction {
         Top    = 1u, // Y: Line 0
         Bottom = 2u  //, // Y: Line ( _totalSizeY -1 )
@@ -83,29 +93,92 @@ namespace MDSIM
       /// \param[in] const unsigned int direction, Top or Bottom
       /// \param[in] bool posOnly send only positions or complete particle
       ///
-      void
+      handle
       sendParticles( std::list<memory::Particle<double> >& p,
                      const unsigned int direction,
                      const bool posOnly)
       {
         std::cout << "Error: Not implemented!" << std::endl;
         
-        //if( ( direction & this->Top ) == this->Top )
+        int elemPerParticle;
+        if( posOnly )
+          elemPerParticle = 3; // 3xPos
+        else
+          elemPerParticle = 7; // 3xPos, 3xVel, 1xMass
         
-        /// \todo ....
-        /// use different tag for posOnly true or false
-        /// create long array (or std::vector) with doubles
+        std::vector<double>* sendData = new std::vector<double>;
+        sendData->reserve( p.size()*elemPerParticle );
+        
+        for( std::list<memory::Particle<double> >::iterator it = p.begin();
+             it != p.end(); it++ )
+        {
+          if( posOnly )
+          {
+            const memory::vector3D<double> r( it->getPosition() );
+            sendData->push_back( r.x );
+            sendData->push_back( r.y );
+            sendData->push_back( r.z );
+          }
+          else
+          {
+            const memory::vector3D<double> r( it->getPosition() );
+            const memory::vector3D<double> v( it->getVelocity() );
+            double m = it->getMass();
+            sendData->push_back( r.x );
+            sendData->push_back( r.y );
+            sendData->push_back( r.z );
+            sendData->push_back( v.x );
+            sendData->push_back( v.y );
+            sendData->push_back( v.z );
+            sendData->push_back( m );
+          }
+        }
+        
+        //if( ( direction & this->Top ) == this->Top )
+        /// \todo get recv rank
+        
+        int dest = 0; // todo!
+        int tag  = int(posOnly);
+        MPI_Request mySend;
+        
+        MPI_Isend( &(*sendData->begin()),
+                   sendData->size(),
+                   MPI_DOUBLE,
+                   dest,
+                   tag,
+                   MPI_COMM_WORLD,
+                   &mySend );
+
+        _dataOut.insert(
+          std::pair<MPI_Request, std::vector<double>* >( mySend, sendData ) );
+        
+        return mySend;
+      }
+      
+      /// Finish Send and free buffers
+      ///
+      void
+      finishSend( handle h )
+      {
+        std::cout << "Error: Not implemented!" << std::endl;
+        /// MPI_Test oder _Probe
         ///
-        /// Send:
-        ///   MPI_CART_SHIFT
-        ///   MPI_ISEND
-        ///   -> return the ISend Request as a handle and allow
-        ///      the user to call a barrier later with it
-        /// 
+        /// map call destructor for value to handle
+        /// then erase map element with handle
+      }
+      
+      /// Receive Particles
+      ///
+      void
+      receiveParticles( std::vector<memory::Particle<double> >& p )
+      {
+        std::cout << "Error: Not implemented!" << std::endl;
+        
         /// New Method: Receive
         ///   MPI_Probe
         ///   MPI_Get_Count auf MPI_DOUBLE
         ///   MPI_Recv
+        /// 
       }
       
     };
