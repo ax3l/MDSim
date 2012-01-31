@@ -52,13 +52,19 @@ main( int argc, char *argv[] )
               << std::endl;
   }
   
-  std::cout << "Info: MyDomain (" << myXOffset << " - "
+  std::cout << "Info: MyDomain  cellNr[" << myXOffset << " - "
             << myXOffset + myXCells -1 << "; "
-            << myYOffset << " - " << myYOffset + myYCells -1 << ")"
+            << myYOffset << " - " << myYOffset + myYCells -1 << "]"
             << " at Rank " << comm.getRank()
             << std::endl;
   
   memory::Domain<double> myDomain( myXCells, myYCells, myXOffset, myYOffset );
+  
+  std::cout << "Info: MyDomain posReal[" << myDomain.getFirstCellPos().x << " - "
+            << myDomain.getLastCellPos().x << "; "
+            << myDomain.getFirstCellPos().y << " - " << myDomain.getLastCellPos().y << ")"
+            << " at Rank " << comm.getRank()
+            << std::endl;
   
   MPI_Barrier( MPI_COMM_WORLD );
 
@@ -66,7 +72,8 @@ main( int argc, char *argv[] )
   // Initialize Particles
   /// \todo from density and velocity function
   memory::vector3D<double> rE( 0.0, simParams::distance_Sun_Earth, 0.0 );
-  memory::vector3D<double> vE( simParams::EarthSpeed, 0.0, 0.0 );
+  //memory::vector3D<double> vE( simParams::EarthSpeed, 0.0, 0.0 );
+  memory::vector3D<double> vE( 0.0, simParams::EarthSpeed, 0.0 );
   memory::Particle<double> earth( rE, vE, simParams::mass * simParams::partialEarthSun );
 
   memory::vector3D<double> rS( 0.0, 0.0, 0.0 );
@@ -76,6 +83,9 @@ main( int argc, char *argv[] )
   // initialize particles
   myDomain.addParticle( earth );
   //myDomain.addParticle( sun );
+  
+  typename communicator::MPI_Communicator::handle hSendToTop = comm.getNullHandle();
+  typename communicator::MPI_Communicator::handle hSendToBot = comm.getNullHandle();
 
   myDomain.coutParticlePos();
   for( double t = 0.0; t < simParams::simTime; t += simParams::dt )
@@ -96,17 +106,39 @@ main( int argc, char *argv[] )
     //                border particles to neighbor ghosts
     std::list<memory::Particle<double> > pOutTop =
       myDomain.getArea( myDomain.Top,
-                        myDomain.AreaBorder | myDomain.AreaGhost );
-    comm.sendParticles( pOutTop, comm.Top, false );
+                        myDomain.AreaGhost | myDomain.AreaBorder );
+    hSendToTop = comm.sendParticles( pOutTop, comm.Top, false );
+    pOutTop.clear();
     
     std::list<memory::Particle<double> > pOutBottom =
       myDomain.getArea( myDomain.Bottom,
-                        myDomain.AreaBorder | myDomain.AreaGhost );
-    comm.sendParticles( pOutBottom, comm.Bottom, false );
+                        myDomain.AreaGhost | myDomain.AreaBorder );
+    hSendToBot = comm.sendParticles( pOutBottom, comm.Bottom, false );
+    pOutBottom.clear();
     
-    /// \todo receive particles
+    // receive particles
+    //std::cout << "Info: Receive..." << std::endl;
+    std::vector<memory::Particle<double> > pRecv;
+    comm.receiveParticles( pRecv, false );    
+    
+    for( std::vector<memory::Particle<double> >::iterator itNewP = pRecv.begin();
+         itNewP != pRecv.end();
+         itNewP++ )
+    {
+      myDomain.addParticle( (*itNewP), true );
+    }
+    pRecv.clear();
+    
+    if( pRecv.size() > 0 )
+      std::cout << "Info: Receive..."
+                << " rank(" << comm.getRank() << ")" << std::endl;
+    
+    // clear send buffers and wait for send finish
+    comm.finishSend( hSendToTop );
+    comm.finishSend( hSendToBot );
     
     myDomain.coutParticlePos();
+    //myDomain.coutParticleNum();
   }
 
   

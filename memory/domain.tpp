@@ -81,8 +81,10 @@ Domain<floatType>::getCellNr( vector3D<floatType>& pos,
 
   if( positionToLocal )
   {
-    const vector3D<floatType> offset( double( xCell -1 ) * simParams::cutoff,
-                                      double( yCell -1 ) * simParams::cutoff,
+    const vector3D<floatType> offset( double( xCell -1 ) * simParams::cutoff
+                                      + getFirstCellPos().x,
+                                      double( yCell -1 ) * simParams::cutoff
+                                      + getFirstCellPos().y,
                                       0.0 );
     pos -= offset;
     //std::cout << "Info: local pos ("
@@ -185,7 +187,18 @@ Domain<floatType>::getArea( const unsigned int direction,
         
         const vector3D<floatType> r( getFirstCellPos( )   // Domain Offset
                                      + cellOffset );      // Cell in Domain
+        
         p.back().addPosition( r );
+        
+        vector3D<floatType> yCheck( p.back().getPosition() );
+        
+        // y-periodic:
+        if( yCheck.y > ( simParams::cellsY -1 )*simParams::cutoff )
+          yCheck.y -= simParams::cellsY * simParams::cutoff;
+        else if( yCheck.y < simParams::cutoff )
+          yCheck.y += simParams::cellsY * simParams::cutoff;
+        
+        p.back().setPosition( yCheck );
       }
     }
   }
@@ -315,7 +328,13 @@ Domain<floatType>::addParticle( const Particle<floatType>& p,
   {
     p_local.setPosition( r_local );
     _cellMatrix.at( cellNr ).addParticle( p_local );
-    //std::cout << "Added particle to cell nr. " << cellNr << std::endl;
+    
+    //communicator::MPI_Communicator& comm =
+    //  communicator::MPI_Communicator::getInstance();
+    //int rank = comm.getRank();
+        
+    //std::cout << "Added particle to cell nr. " << cellNr
+    //          << " rank(" << rank << ")" << std::endl;
   }
 }
 
@@ -418,6 +437,10 @@ Domain<floatType>::coutParticlePos( )
   std::list<Particle<floatType> >* curParticleList;
   typename std::list<Particle<floatType> >::iterator p;
 
+  communicator::MPI_Communicator& comm =
+    communicator::MPI_Communicator::getInstance( );
+  int rank = comm.getRank( );
+
   // walk trough all cells in this domain which are not ghosts
   for( int y = 1; y < _totalSizeY - 1; y++ )
     for( int x = 1; x < _totalSizeX - 1; x++ )
@@ -433,11 +456,43 @@ Domain<floatType>::coutParticlePos( )
         const vector3D<floatType> r( p->getPosition( )
                                      + getFirstCellPos( ) // Domain Offset
                                      + cellOffset );      // Cell in Domain
+        
         std::cout << r.x << " " << r.y << " " << r.z
                   << " cell(" << x << ", " << y << ")"
+                  << " rank(" << rank << ")"
                   << std::endl;
       }
     }
+}
+
+template <typename floatType>
+void
+Domain<floatType>::coutParticleNum( )
+{
+  std::list<Particle<floatType> >* curParticleList;
+  typename std::list<Particle<floatType> >::iterator p;
+  
+  communicator::MPI_Communicator& comm =
+    communicator::MPI_Communicator::getInstance( );
+  int rank = comm.getRank( );
+  
+  int anzPart = 0;
+
+  // walk trough all cells in this domain which are not ghosts
+  for( int y = 1; y < _totalSizeY - 1; y++ )
+    for( int x = 1; x < _totalSizeX - 1; x++ )
+    {
+      curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
+
+      // edit every velocity and move to next position
+      for( p = curParticleList->begin( ); p != curParticleList->end( ); p++ )
+      {
+        anzPart++;
+      }
+    }
+  
+  std::cout << "Particles " << anzPart << " rank("
+            << rank << ")" << std::endl;
 }
 
 

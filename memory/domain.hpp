@@ -11,6 +11,8 @@
 #include "vector3D.hpp"
 #include "../simulation_defines.hpp"
 
+#include "../communicator/mpi_communicator.hpp"
+
 namespace MDSIM
 {
   namespace memory
@@ -171,6 +173,10 @@ namespace MDSIM
       /// Write out the global position for each particle
       ///
       void coutParticlePos( );
+      
+      /// Write out the local number of particles without ghosts
+      ///
+      void coutParticleNum( );
 
     };
     

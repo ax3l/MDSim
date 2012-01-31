@@ -21,7 +21,7 @@ namespace MDSIM
     {
     private:
       int _rank, _size;
-      MPI_Comm _comm_cart;
+      //MPI_Comm _comm_cart;
       std::map<MPI_Request, std::vector<double>* > _dataOut;
       
       // Hide Constructors
@@ -31,17 +31,17 @@ namespace MDSIM
         MPI_Comm_rank( MPI_COMM_WORLD, &_rank ); /* get current process id */
         MPI_Comm_size( MPI_COMM_WORLD, &_size ); /* get number of processes */
         
-        const int ndims = 1;
-        int nrRanks[ ndims ] = { _size };
-        int periods[ ndims ] = { true };
-        const int reorder = false; // could be done with appropriate hardware supp.
+        //const int ndims = 1;
+        //int nrRanks[ ndims ] = { _size };
+        //int periods[ ndims ] = { true };
+        //const int reorder = false; // could be done with appropriate hardware supp.
 
-        MPI_Cart_create( MPI_COMM_WORLD,
-                         ndims,
-                         nrRanks,
-                         periods,
-                         reorder,
-                         &_comm_cart );
+        //MPI_Cart_create( MPI_COMM_WORLD,
+        //                 ndims,
+        //                nrRanks,
+        //                 periods,
+        //                 reorder,
+        //                 &_comm_cart );
         
         std::cout << "Info: MPI initialized..." << std::endl;
       }
@@ -56,8 +56,50 @@ namespace MDSIM
         std::cout << "Info: MPI finalized..." << std::endl;
       }
       
+      /// Parse Double Buffer from recv to particle list
+      /// 
+      /// \param[in] recvBuf as std::vector<double>
+      /// \param[in] posOnly as bool - 3 attr or 7 attr particle?
+      /// \param[out] 
+      void
+      parseDoubleToParticle( std::vector<double>& recvBuf,
+                             bool posOnly,
+                             std::vector<memory::Particle<double> >& p )
+      {
+        for( std::vector<double>::iterator it = recvBuf.begin( );
+             it != recvBuf.end( );
+             it++ )
+        {
+          double x = *it;
+          ++it;
+          double y = *it;
+          ++it;
+          double z = *it;
+          ++it;
+          const memory::vector3D<double> r( x, y, z );
+
+          x = *it;
+          ++it;
+          y = *it;
+          ++it;
+          z = *it;
+          ++it;
+          const memory::vector3D<double> v( x, y, z );
+
+          const memory::Particle<double> tmpP( r, v, *it );
+
+          p.push_back( tmpP );
+        }
+      }
+      
     public:
       typedef MPI_Request handle;
+      
+      handle
+      getNullHandle( )
+      {
+        return MPI_REQUEST_NULL;
+      }
       
       enum Direction {
         Top    = 1u, // Y: Line 0
@@ -90,16 +132,14 @@ namespace MDSIM
       ///
       /// \param[in] std::list<memory::Particle<double> > byRef with global
       ///                                                 positions
-      /// \param[in] const unsigned int direction, Top or Bottom
+      /// \param[in] const unsigned int direction, Top xor Bottom
       /// \param[in] bool posOnly send only positions or complete particle
       ///
       handle
       sendParticles( std::list<memory::Particle<double> >& p,
                      const unsigned int direction,
                      const bool posOnly)
-      {
-        std::cout << "Error: Not implemented!" << std::endl;
-        
+      { 
         int elemPerParticle;
         if( posOnly )
           elemPerParticle = 3; // 3xPos
@@ -107,6 +147,10 @@ namespace MDSIM
           elemPerParticle = 7; // 3xPos, 3xVel, 1xMass
         
         std::vector<double>* sendData = new std::vector<double>;
+        
+        //if( p.size() > 0 )
+        //      std::cout << "Info: Send Particles " << p.size() << std::endl;
+        
         sendData->reserve( p.size()*elemPerParticle );
         
         for( std::list<memory::Particle<double> >::iterator it = p.begin();
@@ -134,10 +178,21 @@ namespace MDSIM
           }
         }
         
-        //if( ( direction & this->Top ) == this->Top )
-        /// \todo get recv rank
+        int dest;
+        if( ( direction & this->Top ) == this->Top )
+        {
+          dest = _rank + 1;
+          if( dest == _size )
+            dest = 0;
+        }
+          
+        if( ( direction & this->Bottom ) == this->Bottom )
+        {
+          dest = _rank - 1;
+          if( dest == -1 )
+            dest += _size;
+        }
         
-        int dest = 0; // todo!
         int tag  = int(posOnly);
         MPI_Request mySend;
         
@@ -158,27 +213,135 @@ namespace MDSIM
       /// Finish Send and free buffers
       ///
       void
-      finishSend( handle h )
-      {
-        std::cout << "Error: Not implemented!" << std::endl;
-        /// MPI_Test oder _Probe
-        ///
-        /// map call destructor for value to handle
-        /// then erase map element with handle
+      finishSend( handle& h )
+      { 
+        if( h = MPI_REQUEST_NULL )
+          return;
+        
+        MPI_Status status;
+        MPI_Wait( &h,
+                  &status );
+        
+        // clean destruct vector
+        _dataOut[h]->clear();
+        delete _dataOut[h];
+        // delete map element
+        _dataOut.erase( h );
       }
       
       /// Receive Particles
       ///
       void
-      receiveParticles( std::vector<memory::Particle<double> >& p )
+      receiveParticles( std::vector<memory::Particle<double> >& p,
+                        bool includeOnlyParticles )
       {
-        std::cout << "Error: Not implemented!" << std::endl;
+        if( includeOnlyParticles )
+          std::cout << "Error: Not implemented!" << std::endl;
         
-        /// New Method: Receive
-        ///   MPI_Probe
-        ///   MPI_Get_Count auf MPI_DOUBLE
-        ///   MPI_Recv
-        /// 
+        int flagTop = int(false);
+        int flagBot = int(false);
+        
+        bool finishTop = false;
+        bool finishBot = false;
+        
+        int countTop;
+        int countBot;
+        
+        MPI_Status statusTop;
+        MPI_Status statusBot;
+        
+        int tag        = int(false);
+        //int tagPosOnly = int(true);
+
+        int srcTop = _rank + 1;
+        if( srcTop == _size )
+          srcTop = 0;
+        
+        int srcBot = _rank - 1;
+        if( srcBot == -1 )
+          srcBot += _size;
+
+        
+        while( !flagTop || !flagBot )
+        {
+          // TOP
+          if( !flagTop )
+            MPI_Iprobe( srcTop,
+                        tag,
+                        MPI_COMM_WORLD,
+                        &flagTop,
+                        &statusTop );
+          if( flagTop && !finishTop )
+          { 
+            MPI_Get_count( &statusTop,
+                           MPI_DOUBLE,
+                           &countTop );
+            
+            //if( countTop > 0 )
+            //  std::cout << "Info: Receive(" << _rank
+            //            << ") from Top(" << srcTop << ") "
+            //            << countTop/7 << " particles" << std::endl;
+            
+            p.reserve( p.size() + countTop/7 );
+            
+            std::vector<double> newP;
+            newP.resize( countTop );
+            
+            MPI_Recv( &(*newP.begin()),
+                      countTop, 
+                      MPI_DOUBLE,
+                      srcTop,
+                      tag,
+                      MPI_COMM_WORLD,
+                      &statusTop );
+            
+            // put into particle list
+            parseDoubleToParticle( newP,
+                                   false,
+                                   p );
+            newP.clear();
+            finishTop = true;
+          }
+          
+          // BOTTOM
+          if( !flagBot )
+            MPI_Iprobe( srcBot,
+                        tag,
+                        MPI_COMM_WORLD,
+                        &flagBot,
+                        &statusBot );
+          if( flagBot && !finishBot )
+          { 
+            MPI_Get_count( &statusBot,
+                           MPI_DOUBLE,
+                           &countBot );
+            
+            //if( countBot > 0 )
+            //  std::cout << "Info: Receive(" << _rank
+            //            << ") from Bot(" << srcBot << ") "
+            //            << countBot/7 << " particles" << std::endl;
+            
+            p.reserve( p.size() + countBot/7 );
+            
+            std::vector<double> newP;
+            newP.resize( countBot );
+            
+            MPI_Recv( &(*newP.begin()),
+                      countBot, 
+                      MPI_DOUBLE,
+                      srcBot,
+                      tag,
+                      MPI_COMM_WORLD,
+                      &statusBot );
+            
+            // put into particle list
+            parseDoubleToParticle( newP,
+                                   false,
+                                   p );
+            newP.clear();
+            finishBot = true;
+          }
+        }
       }
       
     };
