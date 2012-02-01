@@ -117,21 +117,15 @@ main( int argc, char *argv[] )
     pOutBottom.clear();
     
     // receive particles
-    //std::cout << "Info: Receive..." << std::endl;
     std::vector<memory::Particle<double> > pRecv;
-    comm.receiveParticles( pRecv, false );    
+    comm.receiveParticles( pRecv, false );
     
-    for( std::vector<memory::Particle<double> >::iterator itNewP = pRecv.begin();
-         itNewP != pRecv.end();
-         itNewP++ )
-    {
-      myDomain.addParticle( (*itNewP), true );
-    }
+    // add received particles
+    myDomain.addParticle( pRecv, true );
     pRecv.clear();
     
-    if( pRecv.size() > 0 )
-      std::cout << "Info: Receive..."
-                << " rank(" << comm.getRank() << ")" << std::endl;
+    // in-Domain: build x-ghosts
+    myDomain.createInnerDomainGhosts( myDomain.XPeriodic );
     
     // clear send buffers and wait for send finish
     comm.finishSend( hSendToTop );

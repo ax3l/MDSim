@@ -208,8 +208,7 @@ Domain<floatType>::getArea( const unsigned int direction,
 
 template <typename floatType>
 void
-Domain<floatType>::moveInnerDomainPeriodic( //std::list<Particle<floatType>* >& p,
-                                            const unsigned int periodic )
+Domain<floatType>::moveInnerDomainPeriodic( const unsigned int periodic )
 {
   if( ( periodic & this->XPeriodic ) != this->XPeriodic )
     std::cout << "Error: Not implemented!" << std::endl;
@@ -224,7 +223,6 @@ Domain<floatType>::moveInnerDomainPeriodic( //std::list<Particle<floatType>* >& 
     {
       curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
 
-      // check for <0. and >=1. in local pos of particle
       for( pInCell = curParticleList->begin( ); pInCell != curParticleList->end( ); pInCell++ )
       {
         
@@ -244,6 +242,42 @@ Domain<floatType>::moveInnerDomainPeriodic( //std::list<Particle<floatType>* >& 
         }
       }
       curParticleList->clear();
+    }
+}
+
+template <typename floatType>
+void
+Domain<floatType>::createInnerDomainGhosts( const unsigned int periodic )
+{
+  if( ( periodic & this->XPeriodic ) != this->XPeriodic )
+    std::cout << "Error: Not implemented!" << std::endl;
+  
+  std::list<Particle<floatType> >* curParticleList;
+  std::list<Particle<floatType> >* copyToParticleList;
+  typename std::list<Particle<floatType> >::iterator pInCell;
+
+  // go through LEFT and RIGHT border
+  for( int y = 0; y < _totalSizeY; y++ )
+    for( int x = 1; x < _totalSizeX; x+= _totalSizeX -3 )
+    {
+      curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
+
+      for( pInCell = curParticleList->begin( ); pInCell != curParticleList->end( ); pInCell++ )
+      {
+        
+        if( x == 1 )
+        {
+          // select ghost (right)
+          copyToParticleList = _cellMatrix.at( y * _totalSizeX + _totalSizeX -1 ).getParticleList( );
+          copyToParticleList->push_back( (*pInCell) );
+        }
+        if( x == _totalSizeX -2 )
+        {
+          // select ghost (left)
+          copyToParticleList = _cellMatrix.at( y * _totalSizeX + 0 ).getParticleList( );
+          copyToParticleList->push_back( (*pInCell) );
+        }
+      }
     }
 }
 
@@ -335,6 +369,19 @@ Domain<floatType>::addParticle( const Particle<floatType>& p,
         
     //std::cout << "Added particle to cell nr. " << cellNr
     //          << " rank(" << rank << ")" << std::endl;
+  }
+}
+
+template <typename floatType>
+void
+Domain<floatType>::addParticle( std::vector<memory::Particle<double> >& p,
+                                 const bool allowGhost )
+{
+  for( std::vector<memory::Particle<double> >::iterator itNewP = p.begin( );
+       itNewP != p.end( );
+       itNewP++ )
+  {
+    addParticle( ( *itNewP ), allowGhost );
   }
 }
 

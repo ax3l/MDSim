@@ -126,9 +126,18 @@ namespace MDSIM
       /// Move Particles from Ghost to opposite border area with a specified
       /// direction
       ///
-      /// \param[in const unsigned int periodic, XPeriodic or YPeriodic
+      /// \param[in] const unsigned int periodic, XPeriodic or YPeriodic
       ///
       void moveInnerDomainPeriodic( const unsigned int periodic );
+      
+      /// Copy Particles from Border to opposite ghost area
+      ///
+      /// Copy Particles from Border to opposite ghost area with a specified
+      /// direction
+      ///
+      /// \param[in] const unsigned int periodic, XPeriodic or YPeriodic
+      ///
+      void createInnerDomainGhosts( const unsigned int periodic );
       
       /// Remove Particles from this Domain
       ///
@@ -149,6 +158,17 @@ namespace MDSIM
       ///                             cell regions
       ///
       void addParticle( const Particle<floatType>& p,
+                        const bool allowGhost = false );
+      
+      /// Add Vector of Particles (Overloaded)
+      ///
+      /// calls addParticle for each element (=single particle) of the vector
+      ///
+      /// \param[in] std::vector<memory::Particle<double> > vector of particles
+      /// \param[in] bool allowGhost, allows to add a particle to the ghost
+      ///                             cell regions
+      ///
+      void addParticle( std::vector<memory::Particle<double> >& p,
                         const bool allowGhost = false );
 
       /// Resets the Forces for each Particle
