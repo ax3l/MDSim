@@ -182,6 +182,7 @@ namespace MDSIM
       /// \todo extract the Physics to physics/ and into classes
       /// \todo calculate forces with particles in neighbor cells
       ///
+      template <typename ForceModel>
       void calculateForces( );
       
       /// Move Particles

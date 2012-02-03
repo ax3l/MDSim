@@ -9,6 +9,7 @@
 #include "memory/particle.hpp"
 #include "memory/vector3D.hpp"
 #include "communicator/mpi_communicator.hpp"
+#include "physics/force_gravity.hpp"
 
 using namespace std;
 using namespace MDSIM;
@@ -19,7 +20,6 @@ main( int argc, char *argv[] )
   communicator::MPI_Communicator& comm =
     communicator::MPI_Communicator::getInstance();
   
-  /// \todo Write Communicator for particle positions: copy border to ghost
   /// \todo (l8r) Write load balancing routine for domain size in y:
   ///       - weighting function (left, right, min-relative-difference of n-%)
   ///       - swap cell-lines to left or right
@@ -72,8 +72,8 @@ main( int argc, char *argv[] )
   // Initialize Particles
   /// \todo from density and velocity function
   memory::vector3D<double> rE( 0.0, simParams::distance_Sun_Earth, 0.0 );
-  //memory::vector3D<double> vE( simParams::EarthSpeed, 0.0, 0.0 );
-  memory::vector3D<double> vE( 0.0, simParams::EarthSpeed, 0.0 );
+  memory::vector3D<double> vE( simParams::EarthSpeed, 0.0, 0.0 );
+  //memory::vector3D<double> vE( 0.0, simParams::EarthSpeed, 0.0 );
   memory::Particle<double> earth( rE, vE, simParams::mass * simParams::partialEarthSun );
 
   memory::vector3D<double> rS( 0.0, 0.0, 0.0 );
@@ -82,7 +82,7 @@ main( int argc, char *argv[] )
 
   // initialize particles
   myDomain.addParticle( earth );
-  //myDomain.addParticle( sun );
+  myDomain.addParticle( sun );
   
   typename communicator::MPI_Communicator::handle hSendToTop = comm.getNullHandle();
   typename communicator::MPI_Communicator::handle hSendToBot = comm.getNullHandle();
@@ -91,11 +91,9 @@ main( int argc, char *argv[] )
   for( double t = 0.0; t < simParams::simTime; t += simParams::dt )
   {
     myDomain.resetForces();
+    myDomain.calculateForces<physics::force_gravity<double> >();
     
-    /// \todo also for NxN with next neighbors!
-    myDomain.calculateForces();
     myDomain.clearGhostCells();
-    
     myDomain.moveParticles();
     myDomain.mapParticlesToCells();
     

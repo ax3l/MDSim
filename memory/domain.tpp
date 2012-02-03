@@ -11,11 +11,11 @@ Domain<floatType>::Domain( const int sizeX,
   _x0( x0 ),
   _y0( y0 )
 {
-  if( sizeX < 3 )
-    std::cout << "ERROR: SizeX must be at least 3 (is: " << sizeX << ")"
+  if( sizeX < 4 )
+    std::cout << "ERROR: SizeX must be at least 4 (is: " << sizeX << ")"
               << std::endl;
-  if( sizeY < 3 )
-    std::cout << "ERROR: SizeY must be at least 3 (is: " << sizeY << ")"
+  if( sizeY < 4 )
+    std::cout << "ERROR: SizeY must be at least 4 (is: " << sizeY << ")"
               << std::endl;
   
   _cellMatrix.reserve( sizeX * sizeY );
@@ -301,7 +301,6 @@ Domain<floatType>::mapParticlesToCells( )
       // check for <0. and >=1. in local pos of particle
       for( p = curParticleList->begin( ); p != curParticleList->end( ); p++ )
       {
-        //std::cout << p->getMass( ) << std::endl;
         vector3D<floatType> r_local( p->getPosition( ) );
         
         xOff = 0;
@@ -332,8 +331,9 @@ Domain<floatType>::mapParticlesToCells( )
           moveToParticleList = _cellMatrix.at( ( y + yOff ) * _totalSizeX + ( x + xOff ) ).getParticleList( );
           moveToParticleList->push_back( ( *p ) );
 
-          curParticleList->erase( p );
-          p--;
+          p = curParticleList->erase( p );
+          if( p != curParticleList->begin( ) )
+            p--;
         }
       }
     }
@@ -407,11 +407,15 @@ Domain<floatType>::resetForces( )
 }
 
 template <typename floatType>
+template <typename ForceModel>
 void
 Domain<floatType>::calculateForces( )
 {
   std::list<Particle<floatType> >* curParticleList;
+  std::list<Particle<floatType> >* neighborParticleList;
   typename std::list<Particle<floatType> >::iterator p1, p2;
+  
+  ForceModel forceModel;
 
   // walk trough all cells in this domain which are not ghosts
   for( int y = 1; y < _totalSizeY - 1; y++ )
@@ -422,28 +426,43 @@ Domain<floatType>::calculateForces( )
       // calculcate in-cell-forces - NxN
       for( p1 = curParticleList->begin( ); p1 != curParticleList->end( ); p1++ )
       {
-        p1->resetForce( );
-        // calculcate in-cell-forces - NxN
-        for( p2 = p1; p2 != curParticleList->end( ); p2++ )
-        {
-          if( p2 == p1 ) continue;
+        // walk through next neighbor cells
+        for( int yN = y -1; yN <= y +1; yN++ )
+          for( int xN = x -1; xN <= x +1; xN++ )
+          {
+            // my Cell
+            if( yN == y && xN == x )
+            {
+              // calculcate in-cell-forces - NxN
+              for( p2 = p1; p2 != curParticleList->end( ); p2++ )
+              {
+                if( p2 == p1 ) continue;
+                
+                vector3D<floatType> cellOff( 0.0, 0.0, 0.0 );
+                vector3D<floatType> force( forceModel( p1, p2, cellOff ) );
 
-          // F = G*m1*m2/r^2
-          vector3D<floatType> r( p2->getPosition( ) - p1->getPosition( ) );
-          vector3D<floatType> er( r / sqrt( r.abs2( ) ) );
+                p1->addForce( force );
+                p2->addForce( force * ( -1.0 ) );
+                //std::cout << "Force2N: " << force.abs2() << " " << p1->getMass() << std::endl;
+              }
+            }
+            else // neighbor cells
+            {
+              neighborParticleList = _cellMatrix.at( yN * _totalSizeX + xN ).getParticleList( );
+              for( p2 = neighborParticleList->begin( ); p2 != neighborParticleList->end( ); p2++ )
+              {
+                vector3D<floatType> cellOff( xN - x, yN - y, 0.0 );
+                vector3D<floatType> force( forceModel( p1, p2, cellOff ) );
 
-          const floatType fAbsTmp = simParams::G * p1->getMass( ) * p2->getMass( );
-          const floatType fAbs = fAbsTmp / r.abs2( );
-
-          vector3D<floatType> force( fAbs * er.x, fAbs * er.y, 0.0 );
-          //std::cout << "Er: " << force.x << " " << force.y << " " << force.z << std::endl;
-          //std::cout << "G: " << simParams::G << std::endl;
-
-          p1->addForce( force );
-          p2->addForce( force * ( -1.0 ) );
-        }
-
-        /// \todo forces with particles in neighbor cells
+                p1->addForce( force );
+                //std::cout << "Force2N: " << force.abs2() << " " << p1->getMass() << std::endl;
+                /// \todo speed improvement:
+                ///       implement newtons third law, which requires an
+                ///       intelligent mapper/walk through domain
+              }
+            }
+            
+          }
 
       }
     }
@@ -489,8 +508,8 @@ Domain<floatType>::coutParticlePos( )
   int rank = comm.getRank( );
 
   // walk trough all cells in this domain which are not ghosts
-  for( int y = 1; y < _totalSizeY - 1; y++ )
-    for( int x = 1; x < _totalSizeX - 1; x++ )
+  for( int y = 0; y < _totalSizeY - 0; y++ )
+    for( int x = 0; x < _totalSizeX - 0; x++ )
     {
       curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
       const vector3D<floatType> cellOffset( double( x -1 ) * simParams::cutoff,
@@ -504,7 +523,10 @@ Domain<floatType>::coutParticlePos( )
                                      + getFirstCellPos( ) // Domain Offset
                                      + cellOffset );      // Cell in Domain
         
+        int isGhost = int( y==0 || y == _totalSizeY -1 ||
+                           x==0 || x == _totalSizeX -1   );
         std::cout << r.x << " " << r.y << " " << r.z
+                  << " ghost(" << isGhost << ")"
                   << " cell(" << x << ", " << y << ")"
                   << " rank(" << rank << ")"
                   << std::endl;
