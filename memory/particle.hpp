@@ -94,6 +94,11 @@ namespace MDSIM
       {
         _position = off;
       }
+      
+      inline void setVelocity( const vector3D<floatType>& off )
+      {
+        _velocity = off;
+      }
 
       inline void addPosition( const vector3D<floatType>& off )
       {

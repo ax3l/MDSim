@@ -479,6 +479,8 @@ Domain<floatType>::moveParticles( )
 {
   std::list<Particle<floatType> >* curParticleList;
   typename std::list<Particle<floatType> >::iterator p;
+  
+  const memory::vector3D<floatType> nullVec( 0.0, 0.0, 0.0 );
 
   // walk trough all cells in this domain which are not ghosts
   for( int y = 1; y < _totalSizeY - 1; y++ )
@@ -494,7 +496,17 @@ Domain<floatType>::moveParticles( )
         p->addVelocity( p->getForce( ) / p->getMass( ) * simParams::dt );
 
         // Move Particle: ds = v * dt
-        p->addPosition( p->getVelocity( ) * simParams::dt );
+        memory::vector3D<floatType> dr( p->getVelocity( ) * simParams::dt );
+        
+        // Ok, SRT / too small cell size fix:
+        if( dr.abs2() >= simParams::cutoff*simParams::cutoff )
+        {
+          dr.x = 0.1 * simParams::cutoff;
+          dr.y = 0.1 * simParams::cutoff;
+          p->setVelocity( nullVec );
+        }
+        
+        p->addPosition( dr );
         //std::cout << "Move: " << p->getVelocity().x << " " << p->getVelocity().y << " " << p->getVelocity().z << std::endl;
 
       }

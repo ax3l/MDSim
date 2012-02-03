@@ -10,6 +10,7 @@
 #include "memory/vector3D.hpp"
 #include "communicator/mpi_communicator.hpp"
 #include "physics/force_gravity.hpp"
+#include "physics/initial_particles.hpp"
 
 using namespace std;
 using namespace MDSIM;
@@ -70,26 +71,20 @@ main( int argc, char *argv[] )
 
 
   // Initialize Particles
-  /// \todo from density and velocity function
-  memory::vector3D<double> rE( 0.0, simParams::distance_Sun_Earth, 0.0 );
-  memory::vector3D<double> vE( simParams::EarthSpeed, 0.0, 0.0 );
-  //memory::vector3D<double> vE( 0.0, simParams::EarthSpeed, 0.0 );
-  memory::Particle<double> earth( rE, vE, simParams::mass * simParams::partialEarthSun );
-
-  memory::vector3D<double> rS( 0.0, 0.0, 0.0 );
-  memory::vector3D<double> vS( 0.0, 0.0, 0.0 );
-  memory::Particle<double> sun( rS, vS, simParams::mass );
-
-  // initialize particles
-  myDomain.addParticle( earth );
-  myDomain.addParticle( sun );
+  //physics::init_SunEarth( myDomain );
+  physics::init_Benchmark( myDomain, 10 );
   
   typename communicator::MPI_Communicator::handle hSendToTop = comm.getNullHandle();
   typename communicator::MPI_Communicator::handle hSendToBot = comm.getNullHandle();
 
-  myDomain.coutParticlePos();
+  int lastPercent = 0;
+  
+  // Main Loop
   for( double t = 0.0; t < simParams::simTime; t += simParams::dt )
   {
+    //myDomain.coutParticlePos();
+    //myDomain.coutParticleNum();
+    
     myDomain.resetForces();
     myDomain.calculateForces<physics::force_gravity<double> >();
     
@@ -129,8 +124,12 @@ main( int argc, char *argv[] )
     comm.finishSend( hSendToTop );
     comm.finishSend( hSendToBot );
     
-    myDomain.coutParticlePos();
-    //myDomain.coutParticleNum();
+    if( comm.getRank() == 0 && int( t / simParams::simTime * 100 ) > lastPercent )
+    {
+      lastPercent = int( t / simParams::simTime * 100);
+      std::cout << lastPercent << "% ("
+                << t << "/" << simParams::simTime << ")" << std::endl;
+    }
   }
 
   
