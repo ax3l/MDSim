@@ -3,6 +3,7 @@
 
 #include <ctime>
 #include <cstdlib>
+#include <cmath>
 
 #include "../simulation_defines.hpp"
 #include "../memory/vector3D.hpp"
@@ -51,7 +52,7 @@ namespace MDSIM
       
       // init random generator
       time_t seed;
-      //seed = time (NULL);
+      //seed = time( NULL );
       seed = 958838454; // deterministic init for benchmark
       srand ( seed );
       
@@ -68,6 +69,68 @@ namespace MDSIM
             const memory::vector3D<double> r( x0 + rx, y0 + ry, 0.0 );
             const memory::vector3D<double> v( 0.0, 0.0, 0.0 );
             memory::Particle<double> particle( r, v, simParams::mass );
+
+            myDomain.addParticle( particle );
+          }
+          x0 += step;
+        }
+        y0 += step;
+      }
+    }
+    
+    /// Initialize a globular cluster of stars
+    template <typename floatType>
+    void
+    init_StarCluster( memory::Domain<floatType>& myDomain,
+                      const memory::vector3D<floatType>& origin,
+                      const memory::vector3D<floatType>& v0,
+                      const double width,
+                      const int maxParticlesPerCell = 1 )
+    {
+      // start of my Domain
+      double x0;
+      double y0 = myDomain.getFirstCellPos().y;
+      double step = simParams::cutoff;
+      // end of my Domain
+      double xE = myDomain.getLastCellPos().x;
+      double yE = myDomain.getLastCellPos().y;
+      
+      // init random generator
+      time_t seed;
+      seed = time( NULL );
+      //seed = 958838454; // deterministic init for benchmark
+      srand ( seed );
+      
+      while( y0 < yE )
+      {
+        x0 = myDomain.getFirstCellPos().x;
+        while( x0 < xE )
+        {
+          for( int i = 0; i < maxParticlesPerCell; i++ )
+          {
+            // calculate distance to origin
+            double rx = double( rand() ) / double( RAND_MAX );
+            double ry = double( rand() ) / double( RAND_MAX );
+            
+            const memory::vector3D<floatType> dist( origin.x - rx,
+                                                    origin.y - ry,
+                                                    0.0 );
+            const double distance = sqrt( dist.abs2() );
+            
+            // pdf = 0 outside
+            if( distance > width )
+              continue;
+            
+            // calculate pdf
+            double pdf = cos( distance * M_PI / 2.0 / width );
+            
+            // if randomDbl => pdf: init particle
+            double rdm = double( rand() ) / double( RAND_MAX );
+            if( rdm < pdf )
+              continue;
+            
+            const memory::vector3D<double> r( x0 + rx, y0 + ry, 0.0 );
+            memory::Particle<double> particle( r, v0, simParams::mass );
 
             myDomain.addParticle( particle );
           }

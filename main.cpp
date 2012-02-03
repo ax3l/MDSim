@@ -73,6 +73,11 @@ main( int argc, char *argv[] )
   // Initialize Particles
   //physics::init_SunEarth( myDomain );
   physics::init_Benchmark( myDomain, 10 );
+  //physics::init_StarCluster( myDomain,
+  //                           const memory::vector3D<floatType>& origin,
+  //                           const memory::vector3D<floatType>& v0,
+  //                           const double width,
+  //                           1 );
   
   typename communicator::MPI_Communicator::handle hSendToTop = comm.getNullHandle();
   typename communicator::MPI_Communicator::handle hSendToBot = comm.getNullHandle();
