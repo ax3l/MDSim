@@ -142,7 +142,7 @@ namespace MDSIM
       { 
         int elemPerParticle;
         if( posOnly )
-          elemPerParticle = 3; // 3xPos
+          elemPerParticle = 4; // 3xPos + 1xMass
         else
           elemPerParticle = 7; // 3xPos, 3xVel, 1xMass
         
@@ -162,6 +162,7 @@ namespace MDSIM
             sendData->push_back( r.x );
             sendData->push_back( r.y );
             sendData->push_back( r.z );
+            sendData->push_back( it->getMass() );
           }
           else
           {
@@ -181,16 +182,16 @@ namespace MDSIM
         int dest;
         if( ( direction & this->Top ) == this->Top )
         {
-          dest = _rank + 1;
-          if( dest == _size )
-            dest = 0;
-        }
-          
-        if( ( direction & this->Bottom ) == this->Bottom )
-        {
           dest = _rank - 1;
           if( dest == -1 )
             dest += _size;
+        }
+
+        if( ( direction & this->Bottom ) == this->Bottom )
+        {
+          dest = _rank + 1;
+          if( dest == _size )
+            dest = 0;
         }
         
         int tag  = int(posOnly);
@@ -253,14 +254,13 @@ namespace MDSIM
         int tag        = int(false);
         //int tagPosOnly = int(true);
 
-        int srcTop = _rank + 1;
-        if( srcTop == _size )
-          srcTop = 0;
+        int srcBot = _rank + 1;
+        if( srcBot == _size )
+          srcBot = 0;
         
-        int srcBot = _rank - 1;
-        if( srcBot == -1 )
-          srcBot += _size;
-
+        int srcTop = _rank - 1;
+        if( srcTop == -1 )
+          srcTop += _size;
         
         while( !flagTop || !flagBot )
         {

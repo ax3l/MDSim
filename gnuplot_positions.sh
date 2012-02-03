@@ -22,9 +22,9 @@
 
 # with lines
 #plot './pos.dat' using 1:2 with points
-plot "< awk '{if($4 == \"ghost(0)\") print}' ./pos.dat" u 1:2 t "Normal" w p pt 2
-#plot "< awk '{if($4 == \"ghost(0)\") print}' ./pos.dat" u 1:2 t "Normal" w p pt 2, \
-#     "< awk '{if($4 == \"ghost(1)\") print}' ./pos.dat" u 1:2 t "Ghost" w p pt 2
+#plot "< awk '{if($4 == \"ghost(0)\") print}' ./pos.dat" u 1:2 t "Normal" w p pt 2
+plot "< awk '{if($4 == \"ghost(0)\") print}' ./pos.dat" u 1:2 t "Normal" w p pt 2, \
+     "< awk '{if($4 == \"ghost(1)\") print}' ./pos.dat" u 1:2 t "Ghost" w p pt 2
 
 set xlabel "x"
 set ylabel "y"

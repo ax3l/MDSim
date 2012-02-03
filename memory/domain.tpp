@@ -353,9 +353,14 @@ Domain<floatType>::addParticle( const Particle<floatType>& p,
   if( cellNr == NotInDomain ||
       ( isGhost == true && allowGhost == false ) )
   {
+    communicator::MPI_Communicator& comm =
+      communicator::MPI_Communicator::getInstance( );
+    int rank = comm.getRank( );
+    
     std::cout << "ERROR: Position( " << p.getPosition( ).x << " "
       << p.getPosition( ).y << " " << p.getPosition( ).z
       << " ) not in Domain! (isGhost: " << isGhost << ")"
+      << " Rank(" << rank << ")"
       << std::endl;
   }
   else
