@@ -344,6 +344,26 @@ namespace MDSIM
         }
       }
       
+      /// MPI_Reduce with Sum
+      ///
+      /// \param[in] int i, local input
+      /// \return int, global sum
+      ///
+      int
+      globalSumReduce( int& i )
+      {
+        int o;
+        MPI_Reduce( &i,
+                    &o,
+                    1,
+                    MPI_INTEGER,
+                    MPI_SUM,
+                    0,
+                    MPI_COMM_WORLD );
+        
+        return o;
+      }
+      
     };
 
   } // namespace communicator

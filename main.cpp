@@ -129,11 +129,13 @@ main( int argc, char *argv[] )
     comm.finishSend( hSendToTop );
     comm.finishSend( hSendToBot );
     
-    if( comm.getRank() == 0 && int( t / simParams::simTime * 100 ) > lastPercent )
+    if( int( t / simParams::simTime * 100 ) > lastPercent )
     {
       lastPercent = int( t / simParams::simTime * 100);
-      std::cout << lastPercent << "% ("
-                << t << "/" << simParams::simTime << ")" << std::endl;
+      if( comm.getRank() == 0 )
+        std::cout << lastPercent << "% ("
+                  << t << "/" << simParams::simTime << ")" << std::endl;
+      myDomain.coutParticleNum();
     }
   }
 

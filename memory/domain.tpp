@@ -577,8 +577,10 @@ Domain<floatType>::coutParticleNum( )
       }
     }
   
-  std::cout << "Particles " << anzPart << " rank("
-            << rank << ")" << std::endl;
+  int anzGlobal = comm.globalSumReduce( anzPart );
+  
+  if( rank == 0 )
+    std::cout << "Particles global " << anzGlobal << std::endl;
 }
 
 
