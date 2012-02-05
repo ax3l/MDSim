@@ -14,11 +14,11 @@ namespace MDSIM
     const double dt_SI = 86400.0 / 3600.0;                        // One Day
     // Simulation Time in Seconds
     //const double simTime_SI = 1000.0 * 12.0 * dt_SI;
-    const double simTime_SI = 365.0 * 86400.0 / 365.0 / 3.6 / 5.0;
+    const double simTime_SI = 365.0 * 86400.0 / 365.0 / 3.6 / 100.0 * 3.;
 
     // Number of Cells (no unit) - global
-    const int cellsX = 192;
-    const int cellsY = 192;
+    const int cellsX = 384;
+    const int cellsY = 384;
 
     // Standard Mass of a Particle in kg
     const double mass_SI = 1.98892e30; // Mass of the Sun
