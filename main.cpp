@@ -72,12 +72,23 @@ main( int argc, char *argv[] )
 
   // Initialize Particles
   //physics::init_SunEarth( myDomain );
-  physics::init_Benchmark( myDomain, 10 );
-  //physics::init_StarCluster( myDomain,
-  //                           const memory::vector3D<floatType>& origin,
-  //                           const memory::vector3D<floatType>& v0,
-  //                           const double width,
-  //                           1 );
+  //physics::init_Benchmark( myDomain, 10 );
+  
+  memory::vector3D<double> origin1( 50.0 * simParams::LJ,  50.0 * simParams::LJ, 0.0 );
+  memory::vector3D<double> origin2( 50.0 * simParams::LJ, 100.0 * simParams::LJ, 0.0 );
+  memory::vector3D<double> v1( 0.0,   1.0 * simParams::HyadenSpeed, 0.0 );
+  memory::vector3D<double> v2( 0.0,  -1.0 * simParams::HyadenSpeed, 0.0 );
+  
+  physics::init_StarCluster( myDomain,
+                             origin1,
+                             v1,
+                             15.0 * simParams::LJ,
+                             1 );
+  physics::init_StarCluster( myDomain,
+                             origin2,
+                             v2,
+                             15.0 * simParams::LJ,
+                             1 );
   
   typename communicator::MPI_Communicator::handle hSendToTop = comm.getNullHandle();
   typename communicator::MPI_Communicator::handle hSendToBot = comm.getNullHandle();
@@ -154,7 +165,7 @@ main( int argc, char *argv[] )
       if( comm.getRank() == 0 )
         std::cout << lastPercent * simParams::outPercent << "% ("
                   << t << "/" << simParams::simTime << ")" << std::endl;
-      //myDomain.coutParticleNum();
+      myDomain.coutParticleNum();
     }
   }
 

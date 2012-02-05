@@ -112,9 +112,9 @@ namespace MDSIM
             double rx = double( rand() ) / double( RAND_MAX );
             double ry = double( rand() ) / double( RAND_MAX );
             
-            const memory::vector3D<floatType> dist( origin.x - rx,
-                                                    origin.y - ry,
-                                                    0.0 );
+            memory::vector3D<floatType> dist( origin.x - rx,
+                                              origin.y - ry,
+                                              0.0 );
             const double distance = sqrt( dist.abs2() );
             
             // pdf = 0 outside
