@@ -120,7 +120,7 @@ main( int argc, char *argv[] )
     // calc forces for HardCore
     myDomain.resetForces();
     myDomain.calculateForces<physics::force_gravity<double> >(
-      myDomain.AreaHardCore );
+     myDomain.AreaHardCore );
     
     // receive particles
     std::vector<memory::Particle<double> > pRecv;

@@ -11,10 +11,10 @@ OutPutOpt     = -o # keep whitespace after "-o"
 # do not use more than -O1 for MPI
 CXX           = mpic++
 #CXX           = g++
-CXXFLAGS      = -O -c -Wall
+CXXFLAGS      = -O2 -c -Wall
 LD            = mpic++
 #LD            = g++
-LDFLAGS       = -O
+LDFLAGS       = -O2
 
 #------------------------------------------------------------------------------
 

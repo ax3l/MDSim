@@ -35,7 +35,7 @@ namespace MDSIM
     const double EarthSpeed_SI = 2.978e4;
     
     // output process each n percent
-    const double outPercent = 1;
+    const double outPercent = 10;
 
 
     // UNITS ----------------------------------------------------------------- //
