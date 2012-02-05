@@ -117,6 +117,11 @@ main( int argc, char *argv[] )
     hSendToBot = comm.sendParticles( pOutBottom, comm.Bottom, false );
     pOutBottom.clear();
     
+    // calc forces for HardCore
+    myDomain.resetForces();
+    myDomain.calculateForces<physics::force_gravity<double> >(
+      myDomain.AreaHardCore );
+    
     // receive particles
     std::vector<memory::Particle<double> > pRecv;
     comm.receiveParticles( pRecv, false );
@@ -128,24 +133,28 @@ main( int argc, char *argv[] )
     // in-Domain: build x-ghosts
     myDomain.createInnerDomainGhosts( myDomain.XPeriodic );
     
+    // calc forces for Border and Core
+    myDomain.calculateForces<physics::force_gravity<double> >(
+      myDomain.AreaBorder | myDomain.AreaCore );
+    
     // clear send buffers and wait for send finish
     comm.finishSend( hSendToTop );
     comm.finishSend( hSendToBot );
     
-    // calc forces
-    myDomain.resetForces();
-    myDomain.calculateForces<physics::force_gravity<double> >(
-      myDomain.AreaBorder | myDomain.AreaCore | myDomain.AreaHardCore );
+    // calc forces (not overlapped with communication)
+    //myDomain.resetForces();
+    //myDomain.calculateForces<physics::force_gravity<double> >(
+    //  myDomain.AreaHardCore | myDomain.AreaBorder | myDomain.AreaCore );
     
     
-    // Output process each 1 percent
-    if( int( t / simParams::simTime * 100 ) > lastPercent )
+    // Output process each n percent
+    if( int( t / simParams::simTime * (100 / simParams::outPercent ) ) > lastPercent )
     {
-      lastPercent = int( t / simParams::simTime * 100);
+      lastPercent = int( t / simParams::simTime * ( 100 / simParams::outPercent ) );
       if( comm.getRank() == 0 )
-        std::cout << lastPercent << "% ("
+        std::cout << lastPercent * simParams::outPercent << "% ("
                   << t << "/" << simParams::simTime << ")" << std::endl;
-      myDomain.coutParticleNum();
+      //myDomain.coutParticleNum();
     }
   }
 

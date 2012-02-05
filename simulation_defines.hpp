@@ -33,6 +33,9 @@ namespace MDSIM
 
     // Average radial speed of the Earth around the Sun in m/s
     const double EarthSpeed_SI = 2.978e4;
+    
+    // output process each n percent
+    const double outPercent = 1;
 
 
     // UNITS ----------------------------------------------------------------- //
