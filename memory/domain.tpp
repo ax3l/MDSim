@@ -414,8 +414,38 @@ Domain<floatType>::resetForces( )
 template <typename floatType>
 template <typename ForceModel>
 void
-Domain<floatType>::calculateForces( )
+Domain<floatType>::calculateForces( const unsigned int area )
 {
+  int x0, xE;
+  int y0, yE;
+  
+  if( area == this->AreaHardCore )
+  {
+    x0 = 3;
+    y0 = 3;
+    xE = _totalSizeX - 3;
+    yE = _totalSizeY - 3;
+  }
+  else if( area == ( this->AreaBorder | this->AreaCore ) )
+  {
+    x0 = 1;
+    y0 = 1;
+    xE = _totalSizeX - 1;
+    yE = _totalSizeY - 1;
+  }
+  else if( ( area & this->AreaBorder )   == this->AreaBorder &&
+           ( area & this->AreaCore )     == this->AreaCore &&
+           ( area & this->AreaHardCore ) == this->AreaHardCore &&
+           ( area & this->AreaGhost )    != this->AreaGhost     )
+  {
+    x0 = 1;
+    y0 = 1;
+    xE = _totalSizeX - 1;
+    yE = _totalSizeY - 1;
+  }
+  else
+    std::cout << "Error: Not implemented!" << std::endl;
+  
   std::list<Particle<floatType> >* curParticleList;
   std::list<Particle<floatType> >* neighborParticleList;
   typename std::list<Particle<floatType> >::iterator p1, p2;
@@ -423,9 +453,14 @@ Domain<floatType>::calculateForces( )
   ForceModel forceModel;
 
   // walk trough all cells in this domain which are not ghosts
-  for( int y = 1; y < _totalSizeY - 1; y++ )
-    for( int x = 1; x < _totalSizeX - 1; x++ )
+  for( int y = y0; y < yE; y++ )
+    for( int x = x0; x < xE; x++ )
     {
+      // Not HardCore?
+      if( ( area & this->AreaHardCore ) != this->AreaHardCore &&
+          ( x >= 3 && y >= 3 && x <_totalSizeX - 3 && y < _totalSizeY - 3 ) )
+        continue;
+      
       curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
 
       // calculcate in-cell-forces - NxN

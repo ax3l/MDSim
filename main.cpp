@@ -84,14 +84,17 @@ main( int argc, char *argv[] )
 
   int lastPercent = 0;
   
+  // init Force calc
+  myDomain.resetForces();
+  myDomain.calculateForces<physics::force_gravity<double> >(
+    myDomain.AreaBorder | myDomain.AreaCore | myDomain.AreaHardCore );
+  
+  
   // Main Loop
   for( double t = 0.0; t < simParams::simTime; t += simParams::dt )
   {
     //myDomain.coutParticlePos();
     //myDomain.coutParticleNum();
-    
-    myDomain.resetForces();
-    myDomain.calculateForces<physics::force_gravity<double> >();
     
     myDomain.clearGhostCells();
     myDomain.moveParticles();
@@ -129,6 +132,13 @@ main( int argc, char *argv[] )
     comm.finishSend( hSendToTop );
     comm.finishSend( hSendToBot );
     
+    // calc forces
+    myDomain.resetForces();
+    myDomain.calculateForces<physics::force_gravity<double> >(
+      myDomain.AreaBorder | myDomain.AreaCore | myDomain.AreaHardCore );
+    
+    
+    // Output process each 1 percent
     if( int( t / simParams::simTime * 100 ) > lastPercent )
     {
       lastPercent = int( t / simParams::simTime * 100);

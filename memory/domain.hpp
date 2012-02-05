@@ -66,9 +66,10 @@ namespace MDSIM
       };
       
       enum AreaType {
-        AreaGhost  = 1u,
-        AreaBorder = 2u//,
-        //AreaCore   = 4u
+        AreaGhost    = 1u,
+        AreaBorder   = 2u,
+        AreaCore     = 4u,
+        AreaHardCore = 8u
       };
       
       /// Get the Real Position of the Beginning of this Domain
@@ -179,11 +180,10 @@ namespace MDSIM
       
       /// Calculate the NxN Forces
       ///
-      /// \todo extract the Physics to physics/ and into classes
-      /// \todo calculate forces with particles in neighbor cells
+      /// \param[in] unsigned int area; AreaHardCore or AreaBorder and AreaCore
       ///
       template <typename ForceModel>
-      void calculateForces( );
+      void calculateForces( const unsigned int area );
       
       /// Move Particles
       ///
