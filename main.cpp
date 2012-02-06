@@ -11,6 +11,7 @@
 #include "communicator/mpi_communicator.hpp"
 #include "physics/force_gravity.hpp"
 #include "physics/initial_particles.hpp"
+#include "simulation_defines _constexpr.hpp"
 
 using namespace std;
 using namespace MDSIM;
@@ -74,21 +75,26 @@ main( int argc, char *argv[] )
   //physics::init_SunEarth( myDomain );
   //physics::init_Benchmark( myDomain, 10 );
   
-  memory::vector3D<double> origin1( 50.0 * simParams::LJ,  50.0 * simParams::LJ, 0.0 );
-  memory::vector3D<double> origin2( 50.0 * simParams::LJ, 100.0 * simParams::LJ, 0.0 );
-  memory::vector3D<double> v1( 0.0,   1.0 * simParams::HyadenSpeed, 0.0 );
-  memory::vector3D<double> v2( 0.0,  -1.0 * simParams::HyadenSpeed, 0.0 );
+  memory::vector3D<double> origin1( 50.0 * simParams::LJ,  55.0 * simParams::LJ, 0.0 );
+  memory::vector3D<double> origin2( 50.0 * simParams::LJ,  95.0 * simParams::LJ, 0.0 );
+  memory::vector3D<double> v0( 0.0, 0.0, 0.0 );
+  memory::vector3D<double> v1( 1.0 * simParams::HyadenSpeed / 5.0,
+                               1.0 * simParams::HyadenSpeed / 1.0,
+                               0.0 );
+  memory::vector3D<double> v2( -1.0 * simParams::HyadenSpeed / 5.0,
+                               -1.0 * simParams::HyadenSpeed / 1.0,
+                               0.0 );
   
   physics::init_StarCluster( myDomain,
                              origin1,
                              v1,
                              15.0 * simParams::LJ,
-                             100 );
+                             200 );
   physics::init_StarCluster( myDomain,
                              origin2,
                              v2,
                              15.0 * simParams::LJ,
-                             100 );
+                             200 );
   
   typename communicator::MPI_Communicator::handle hSendToTop = comm.getNullHandle();
   typename communicator::MPI_Communicator::handle hSendToBot = comm.getNullHandle();
@@ -106,7 +112,8 @@ main( int argc, char *argv[] )
   for( double t = 0.0; t < simParams::simTime; t += simParams::dt )
   {
     i++;
-    myDomain.coutParticlePos( i, false );
+    if( i % simParams::output == 0 )
+      myDomain.coutParticlePos( i / simParams::output, false );
     //myDomain.coutParticleNum();
     
     myDomain.clearGhostCells();

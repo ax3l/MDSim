@@ -15,15 +15,15 @@ set out 'a.eps'
 
 #MyYRange=3.0e-3
 
-set xrange [0.0:10.0]
-set yrange [0.0:15.0]
+set xrange [0.0:5.0]
+set yrange [0.0:8.0]
 #set format y "%11.1e"
 
 #set ytics MyYRange/5.0
 
 # with lines
 #plot './pos.dat' using 1:2 with points
-plot "< grep \"time(`cat ./timestep`)\" ./pos.dat | awk '{if($4 == \"ghost(0)\") print}'" u 1:2 t "Normal" w p pt 2
+plot "< grep \"time(`cat ./timestep`)\" ./pos.dat | awk '{if($4 == \"ghost(0)\") print}'" u 1:2 t "Stern" w p pt 2
 #plot "< awk '{if($4 == \"ghost(0)\") print}' ./pos.dat" u 1:2 t "Normal" w p pt 2, \
 #     "< awk '{if($4 == \"ghost(1)\") print}' ./pos.dat" u 1:2 t "Ghost" w p pt 2
 

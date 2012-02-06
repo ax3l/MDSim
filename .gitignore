@@ -1,6 +1,7 @@
 documents
 presentation
 video
+output.*
 *~
 a.out
 *.ar
