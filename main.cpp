@@ -113,7 +113,10 @@ main( int argc, char *argv[] )
   {
     i++;
     if( i % simParams::output == 0 )
+    {
       myDomain.coutParticlePos( i / simParams::output, false );
+      comm.cleanBuffers();
+    }
     //myDomain.coutParticleNum();
     
     myDomain.clearGhostCells();

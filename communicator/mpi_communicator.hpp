@@ -204,6 +204,7 @@ namespace MDSIM
                    tag,
                    MPI_COMM_WORLD,
                    &mySend );
+        //std::cout << mySend << std::endl;
 
         _dataOut.insert(
           std::pair<MPI_Request, std::vector<double>* >( mySend, sendData ) );
@@ -216,18 +217,45 @@ namespace MDSIM
       void
       finishSend( handle& h )
       { 
-        if( h = MPI_REQUEST_NULL )
+        if( h == MPI_REQUEST_NULL )
           return;
+        
+        return;
+        
+        /// \todo request does not seem to be the right one...
         
         MPI_Status status;
         MPI_Wait( &h,
                   &status );
         
         // clean destruct vector
+        std::cout << ".." << h << std::endl;
+        std::cout << _dataOut[h]->size() << std::endl;
         _dataOut[h]->clear();
+        std::cout << _dataOut[h]->size() << std::endl;
         delete _dataOut[h];
         // delete map element
         _dataOut.erase( h );
+      }
+      
+      /// Clean Buffers
+      void
+      cleanBuffers( )
+      {
+        std::map<MPI_Request, std::vector<double>* >::iterator it;
+        
+        MPI_Barrier( MPI_COMM_WORLD );
+        
+        for( it = _dataOut.begin(); it != _dataOut.end(); it++ )
+        {
+          //std::cout << it->second->size( ) << std::endl;
+          it->second->clear( );
+          //std::cout << it->second->size( ) << std::endl;
+          delete it->second;
+          // delete map element
+          //_dataOut.erase( it );
+        }
+        _dataOut.erase( _dataOut.begin(), _dataOut.end() );
       }
       
       /// Receive Particles
