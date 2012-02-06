@@ -83,12 +83,12 @@ main( int argc, char *argv[] )
                              origin1,
                              v1,
                              15.0 * simParams::LJ,
-                             1 );
+                             100 );
   physics::init_StarCluster( myDomain,
                              origin2,
                              v2,
                              15.0 * simParams::LJ,
-                             1 );
+                             100 );
   
   typename communicator::MPI_Communicator::handle hSendToTop = comm.getNullHandle();
   typename communicator::MPI_Communicator::handle hSendToBot = comm.getNullHandle();
@@ -102,9 +102,11 @@ main( int argc, char *argv[] )
   
   
   // Main Loop
+  int i = 0;
   for( double t = 0.0; t < simParams::simTime; t += simParams::dt )
   {
-    //myDomain.coutParticlePos();
+    i++;
+    myDomain.coutParticlePos( i, false );
     //myDomain.coutParticleNum();
     
     myDomain.clearGhostCells();

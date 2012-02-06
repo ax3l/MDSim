@@ -15,7 +15,7 @@ namespace MDSIM
     
     // Simulation Time in Seconds
     //const double simTime_SI = 1000.0 * 12.0 * dt_SI;
-    const double simTime_SI = 2e11;
+    const double simTime_SI = 2e11 * 50.0;
     // Timestep in Seconds
     const double dt_SI = simTime_SI / 1000.;            // steps
 

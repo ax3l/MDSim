@@ -550,7 +550,7 @@ Domain<floatType>::moveParticles( )
 
 template <typename floatType>
 void
-Domain<floatType>::coutParticlePos( )
+Domain<floatType>::coutParticlePos( const int timestep, const bool ghostsToo )
 {
   std::list<Particle<floatType> >* curParticleList;
   typename std::list<Particle<floatType> >::iterator p;
@@ -558,10 +558,14 @@ Domain<floatType>::coutParticlePos( )
   communicator::MPI_Communicator& comm =
     communicator::MPI_Communicator::getInstance( );
   int rank = comm.getRank( );
+  
+  int ghostOffset = 0;
+  if( !ghostsToo )
+    ghostOffset = 1;
 
   // walk trough all cells in this domain which are not ghosts
-  for( int y = 0; y < _totalSizeY - 0; y++ )
-    for( int x = 0; x < _totalSizeX - 0; x++ )
+  for( int y = ghostOffset; y < _totalSizeY - ghostOffset; y++ )
+    for( int x = ghostOffset; x < _totalSizeX - ghostOffset; x++ )
     {
       curParticleList = _cellMatrix.at( y * _totalSizeX + x ).getParticleList( );
       const vector3D<floatType> cellOffset( double( x -1 ) * simParams::cutoff,
@@ -580,7 +584,7 @@ Domain<floatType>::coutParticlePos( )
         std::cout << r.x << " " << r.y << " " << r.z
                   << " ghost(" << isGhost << ")"
                   << " cell(" << x << ", " << y << ")"
-                  << " rank(" << rank << ")"
+                  << " rank(" << rank << ")" << " time(" << timestep << ")"
                   << std::endl;
       }
     }

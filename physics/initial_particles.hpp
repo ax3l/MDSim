@@ -112,14 +112,16 @@ namespace MDSIM
             double rx = double( rand() ) / double( RAND_MAX );
             double ry = double( rand() ) / double( RAND_MAX );
             
-            memory::vector3D<floatType> dist( origin.x - rx,
-                                              origin.y - ry,
+            memory::vector3D<floatType> dist( origin.x - rx - x0,
+                                              origin.y - ry - y0,
                                               0.0 );
             const double distance = sqrt( dist.abs2() );
             
             // pdf = 0 outside
-            if( distance > width )
+            if( distance > width )  
               continue;
+            
+            //std::cout << "distance " << distance << " width " << width << std::endl;
             
             // calculate pdf
             double pdf = cos( distance * M_PI / 2.0 / width );

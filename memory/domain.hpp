@@ -193,7 +193,7 @@ namespace MDSIM
       
       /// Write out the global position for each particle
       ///
-      void coutParticlePos( );
+      void coutParticlePos( const int timestep = 0, const bool ghostsToo = true );
       
       /// Write out the local number of particles without ghosts
       ///
