@@ -220,22 +220,20 @@ namespace MDSIM
         if( h == MPI_REQUEST_NULL )
           return;
         
-        return;
-        
-        /// \todo request does not seem to be the right one...
-        
         MPI_Status status;
+        handle h_old = h;
+
         MPI_Wait( &h,
                   &status );
         
         // clean destruct vector
-        std::cout << ".." << h << std::endl;
-        std::cout << _dataOut[h]->size() << std::endl;
-        _dataOut[h]->clear();
-        std::cout << _dataOut[h]->size() << std::endl;
-        delete _dataOut[h];
+        //std::cout << ".." << h_old << std::endl;
+        //std::cout << _dataOut[h_old]->size() << std::endl;
+        _dataOut[h_old]->clear();
+        //std::cout << _dataOut[h_old]->size() << std::endl;
+        delete _dataOut[h_old];
         // delete map element
-        _dataOut.erase( h );
+        _dataOut.erase( h_old );
       }
       
       /// Clean Buffers
