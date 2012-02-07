@@ -15,25 +15,28 @@ namespace MDSIM
     
     // Simulation Time in Seconds
     //const double simTime_SI = 1000.0 * 12.0 * dt_SI;
-    const double simTime_SI = 2e11 * 50.0;
+    const double simTime_SI = 2.0e13;
     // Timestep in Seconds
-    const double dt_SI = simTime_SI / 1000.;            // steps
+    const double dt_SI = simTime_SI / 1.0e6;            // steps
 
     // one lightyear in meters
     const double LJ_SI = 9.46e15;
     
+    // output each nth timestep
+    const int output = 1.0e3;
+    
     // Number of Cells (no unit) - global
-    const int cellsX = 10;
-    const int cellsY = 15;
+    const int cellsX = 5;
+    const int cellsY = 8;
 
     // Standard Mass of a Particle in kg
-    const double mass_SI = 1.98892e30; // Mass of the Sun
+    const double mass_SI = 1.98892e30 * 1.0; // Mass of the Sun
 
     const double distance_Sun_Neptun_SI = 4.5e12;
     const double distance_Sun_Earth_SI  = 1.496e11;
     // Force Cut-Off in Meters = Cell Size
     //const double cutoff_SI = distance_Sun_Earth_SI * 4.0;
-    const double cutoff_SI = 10.0*LJ_SI;
+    const double cutoff_SI = 20.0*LJ_SI;
 
     // Gravitational Constant in m^3 / kg / s^2
     const double G_SI = 6.6738e-11;
