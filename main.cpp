@@ -75,14 +75,14 @@ main( int argc, char *argv[] )
   //physics::init_SunEarth( myDomain );
   //physics::init_Benchmark( myDomain, 10 );
   
-  memory::vector3D<double> origin1( 50.0 * simParams::LJ,  50.0 * simParams::LJ, 0.0 );
-  memory::vector3D<double> origin2( 50.0 * simParams::LJ, 100.0 * simParams::LJ, 0.0 );
+  memory::vector3D<double> origin1( 50.0 * simParams::LJ,  55.0 * simParams::LJ, 0.0 );
+  memory::vector3D<double> origin2( 50.0 * simParams::LJ,  95.0 * simParams::LJ, 0.0 );
   memory::vector3D<double> v0( 0.0, 0.0, 0.0 );
-  memory::vector3D<double> v1( 1.0 * simParams::HyadenSpeed / 5.0,
-                               1.0 * simParams::HyadenSpeed / 1.0,
+  memory::vector3D<double> v1( 1.0 * simParams::HyadenSpeed / 50.0,
+                               1.0 * simParams::HyadenSpeed / 8.0,
                                0.0 );
-  memory::vector3D<double> v2( -1.0 * simParams::HyadenSpeed / 5.0,
-                               -1.0 * simParams::HyadenSpeed / 1.0,
+  memory::vector3D<double> v2( -1.0 * simParams::HyadenSpeed / 50.0,
+                               -1.0 * simParams::HyadenSpeed / 8.0,
                                0.0 );
   
   physics::init_StarCluster( myDomain,

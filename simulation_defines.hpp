@@ -15,7 +15,7 @@ namespace MDSIM
     
     // Simulation Time in Seconds
     //const double simTime_SI = 1000.0 * 12.0 * dt_SI;
-    const double simTime_SI = 2.0e13;
+    const double simTime_SI = 4.0e14;
     // Timestep in Seconds
     const double dt_SI = simTime_SI / 1.0e6;            // steps
 
@@ -30,7 +30,7 @@ namespace MDSIM
     const int cellsY = 8;
 
     // Standard Mass of a Particle in kg
-    const double mass_SI = 1.98892e30 * 20.0; // Mass of the Sun
+    const double mass_SI = 1.98892e30 * 1.0; // Mass of the Sun
 
     const double distance_Sun_Neptun_SI = 4.5e12;
     const double distance_Sun_Earth_SI  = 1.496e11;
@@ -45,7 +45,7 @@ namespace MDSIM
     // Average radial speed of the Earth around the Sun in m/s
     const double EarthSpeed_SI = 2.978e4;
     // Average movement of Hyaden in m/s
-    const double HyadenSpeed_SI = 43.0e3;
+    const double HyadenSpeed_SI = 43.0e3 / 4.0;
     
     // output process each n percent
     const double outPercent = 10;
