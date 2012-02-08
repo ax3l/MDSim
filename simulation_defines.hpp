@@ -30,14 +30,14 @@ namespace MDSIM
     const int cellsY = 8;
 
     // Standard Mass of a Particle in kg
-    const double mass_SI = 1.98892e30 * 50.0; // Mass of the Sun
+    const double mass_SI = 1.98892e30 * 20.0; // Mass of the Sun
 
     const double distance_Sun_Neptun_SI = 4.5e12;
     const double distance_Sun_Earth_SI  = 1.496e11;
     // Force Cut-Off in Meters = Cell Size
     //const double cutoff_SI = distance_Sun_Earth_SI * 4.0;
     const double cutoff_SI = 20.0 * LJ_SI;
-    const double cutoffIn_SI = 0.1 * cutoff_SI;
+    const double cutoffIn_SI = 0.05 * cutoff_SI;
 
     // Gravitational Constant in m^3 / kg / s^2
     const double G_SI = 6.6738e-11;
