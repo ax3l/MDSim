@@ -52,6 +52,9 @@ namespace MDSIM
 
         memory::vector3D<floatType> force( fAbs * er.x, fAbs * er.y, 0.0 );
         
+        if( sqrt( r.abs2( ) ) < simParams::cutoffIn )
+          force = force * 0.0;
+        
         return force;
       }
       

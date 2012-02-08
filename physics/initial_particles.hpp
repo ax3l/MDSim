@@ -109,11 +109,11 @@ namespace MDSIM
           for( int i = 0; i < maxParticlesPerCell; i++ )
           {
             // calculate distance to origin
-            double rx = double( rand() ) / double( RAND_MAX );
-            double ry = double( rand() ) / double( RAND_MAX );
+            double rx = double( rand() ) / double( RAND_MAX ) + x0;
+            double ry = double( rand() ) / double( RAND_MAX ) + y0;
             
-            memory::vector3D<floatType> dist( origin.x - rx - x0,
-                                              origin.y - ry - y0,
+            memory::vector3D<floatType> dist( origin.x - rx,
+                                              origin.y - ry,
                                               0.0 );
             const double distance = sqrt( dist.abs2() );
             
@@ -124,14 +124,15 @@ namespace MDSIM
             //std::cout << "distance " << distance << " width " << width << std::endl;
             
             // calculate pdf
-            double pdf = cos( distance * M_PI / 2.0 / width );
+            /// \todo why?! should be cos!
+            double pdf = sin( distance * M_PI / 2.0 / width );
             
             // if randomDbl => pdf: init particle
             double rdm = double( rand() ) / double( RAND_MAX );
             if( rdm < pdf )
               continue;
             
-            const memory::vector3D<double> r( x0 + rx, y0 + ry, 0.0 );
+            const memory::vector3D<double> r( rx, ry, 0.0 );
             memory::Particle<double> particle( r, v0, simParams::mass );
 
             myDomain.addParticle( particle );

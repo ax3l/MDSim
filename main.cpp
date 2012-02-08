@@ -89,12 +89,12 @@ main( int argc, char *argv[] )
                              origin1,
                              v1,
                              15.0 * simParams::LJ,
-                             200 );
+                             250 );
   physics::init_StarCluster( myDomain,
                              origin2,
                              v2,
                              15.0 * simParams::LJ,
-                             200 );
+                             250 );
   
   typename communicator::MPI_Communicator::handle hSendToTop = comm.getNullHandle();
   typename communicator::MPI_Communicator::handle hSendToBot = comm.getNullHandle();
