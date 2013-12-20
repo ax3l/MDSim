@@ -37,24 +37,16 @@ main( int argc, char *argv[] )
   // Initialize Particles
   //physics::init_SunEarth( myDomain );
   //physics::init_Benchmark( myDomain, 10 );
-
   memory::vector3D<double> origin1( 50.0 * simParams::LJ,  55.0 * simParams::LJ, 0.0 );
   memory::vector3D<double> origin2( 50.0 * simParams::LJ,  95.0 * simParams::LJ, 0.0 );
   memory::vector3D<double> v0( 1.0 * simParams::HyadenSpeed / 50.0,
                                1.0 * simParams::HyadenSpeed / 8.0,
                                0.0 );
 
-  physics::init_StarCluster( myDomain,
-                             origin1,
-                             v0,
-                             15.0 * simParams::LJ,
-                             500 );
-  physics::init_StarCluster( myDomain,
-                             origin2,
-                             v0 * (-1.0),
-                             15.0 * simParams::LJ,
-                             500 );
+  physics::init_StarCluster( myDomain, origin1, v0         , 15.0 * simParams::LJ, 500 );
+  physics::init_StarCluster( myDomain, origin2, v0 * (-1.0), 15.0 * simParams::LJ, 500 );
 
+  // init handles and counters
   typename communicator::MPI_Communicator::handle hSendToTop = comm.getNullHandle();
   typename communicator::MPI_Communicator::handle hSendToBot = comm.getNullHandle();
 
