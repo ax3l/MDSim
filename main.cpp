@@ -40,22 +40,18 @@ main( int argc, char *argv[] )
 
   memory::vector3D<double> origin1( 50.0 * simParams::LJ,  55.0 * simParams::LJ, 0.0 );
   memory::vector3D<double> origin2( 50.0 * simParams::LJ,  95.0 * simParams::LJ, 0.0 );
-  memory::vector3D<double> v0( 0.0, 0.0, 0.0 );
-  memory::vector3D<double> v1( 1.0 * simParams::HyadenSpeed / 50.0,
+  memory::vector3D<double> v0( 1.0 * simParams::HyadenSpeed / 50.0,
                                1.0 * simParams::HyadenSpeed / 8.0,
-                               0.0 );
-  memory::vector3D<double> v2( -1.0 * simParams::HyadenSpeed / 50.0,
-                               -1.0 * simParams::HyadenSpeed / 8.0,
                                0.0 );
 
   physics::init_StarCluster( myDomain,
                              origin1,
-                             v1,
+                             v0,
                              15.0 * simParams::LJ,
                              500 );
   physics::init_StarCluster( myDomain,
                              origin2,
-                             v2,
+                             v0 * (-1.0),
                              15.0 * simParams::LJ,
                              500 );
 
